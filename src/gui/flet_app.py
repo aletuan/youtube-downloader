@@ -48,9 +48,9 @@ def main(page: ft.Page):
     
     # Configure window properties using window object
     page.window.width = 1000
-    page.window.height = 900
+    page.window.height = 850
     page.window.min_width = 1000
-    page.window.min_height = 900
+    page.window.min_height = 850
     page.window.resizable = True
     
     # Force update to ensure window size is applied
@@ -108,19 +108,20 @@ def main(page: ft.Page):
     main_card_components = [
         title,
         subtitle,
-        ft.Divider(height=25, color=ft.Colors.TRANSPARENT),
+        ft.Divider(height=12, color=ft.Colors.TRANSPARENT),
         url_input,
-        ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
         dir_row,
-        ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-        config_info,
-        ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+        ft.Divider(height=12, color=ft.Colors.TRANSPARENT),
         button_row,
-        ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
         video_info_card,
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
         progress_bar,
         progress_info,
         status_text,
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+        config_info,
     ]
     
     main_card = create_main_card(main_card_components)
@@ -137,7 +138,7 @@ def main(page: ft.Page):
                     alignment=ft.MainAxisAlignment.END
                 ),
                 main_card,
-                ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 footer
             ],
             expand=True,

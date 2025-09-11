@@ -13,6 +13,10 @@ from core.progress import DownloadProgress
 from config.settings import DEFAULT_OUTPUT_DIR
 from gui.ui_factory import get_common_folders
 
+# Global variable to track active download thread
+_active_download_thread = None
+_download_cancelled = False
+
 
 def handle_folder_browse(page: ft.Page, output_dir_input: ft.TextField, status_text: ft.Text):
     """Handle folder browse button click"""
@@ -181,7 +185,14 @@ def handle_download_click(
     
     # Run download in separate thread to avoid blocking UI
     def download_thread():
+        global _download_cancelled
+        _download_cancelled = False
+        
         try:
+            # Check if download was cancelled before starting
+            if _download_cancelled:
+                return
+                
             # Check if this is a re-download
             is_redownload = download_button.text == "Re-download Video"
             action_text = "Re-downloading" if is_redownload else "Downloading"
@@ -190,6 +201,10 @@ def handle_download_click(
             def progress_callback(progress: DownloadProgress):
                 """Update GUI with download progress"""
                 try:
+                    # Check if download was cancelled
+                    if _download_cancelled:
+                        return
+                        
                     if progress.status == "downloading":
                         # Update progress bar
                         progress_bar.value = progress.percent / 100.0 if progress.percent else None
@@ -250,10 +265,24 @@ def handle_download_click(
             # Keep progress bar visible for a moment to show completion
             # progress_bar.visible = False  # Let user see the completed progress
             progress_info.visible = False
+            
+            # Check if cancelled and update status accordingly
+            if _download_cancelled:
+                status_text.value = "⏹️ Download cancelled"
+                status_text.color = ft.Colors.ORANGE_600
+                progress_bar.visible = False
+                progress_bar.value = None
+                progress_info.visible = False
+                progress_info.value = ""
+            
+            # Clear the active download thread reference
+            global _active_download_thread
+            _active_download_thread = None
             page.update()
     
-    # Start download thread
-    threading.Thread(target=download_thread, daemon=True).start()
+    # Start download thread and store reference
+    _active_download_thread = threading.Thread(target=download_thread, daemon=True)
+    _active_download_thread.start()
 
 
 def handle_clear_click(
@@ -266,11 +295,25 @@ def handle_clear_click(
     video_info_card: ft.Card,
     download_button: ft.ElevatedButton
 ):
-    """Handle clear button click"""
+    """Handle reset button click - stops downloads and resets UI"""
+    global _download_cancelled, _active_download_thread
+    
+    # Cancel any ongoing download
+    if _active_download_thread and _active_download_thread.is_alive():
+        _download_cancelled = True
+        status_text.value = "⏹️ Stopping download..."
+        status_text.color = ft.Colors.ORANGE_600
+        page.update()
+        
+        # Wait briefly for download to stop gracefully
+        _active_download_thread.join(timeout=2.0)
+        _active_download_thread = None
+    
+    # Reset UI to initial state
     url_input.value = ""
     output_dir_input.value = DEFAULT_OUTPUT_DIR
     status_text.value = "Ready to download"
-    status_text.color = ft.Colors.GREY_700
+    status_text.color = ft.Colors.GREY_600
     progress_bar.visible = False
     progress_bar.value = None
     progress_info.visible = False
@@ -282,6 +325,9 @@ def handle_clear_click(
     download_button.text = "Download Video"
     download_button.bgcolor = ft.Colors.RED_400
     download_button.icon = ft.Icons.DOWNLOAD
+    
+    # Reset cancellation flag
+    _download_cancelled = False
     
     page.update()
 

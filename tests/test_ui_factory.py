@@ -31,11 +31,11 @@ class TestUIFactory(unittest.TestCase):
         
         # Test title properties
         self.assertEqual(title.value, "YouTube Downloader")
-        self.assertEqual(title.size, 36)
+        self.assertEqual(title.size, 32)
         
         # Test subtitle properties
         self.assertEqual(subtitle.value, "Download YouTube videos with subtitles")
-        self.assertEqual(subtitle.size, 18)
+        self.assertEqual(subtitle.size, 16)
     
     def test_create_input_section(self):
         """Test input section creation"""
@@ -71,7 +71,7 @@ class TestUIFactory(unittest.TestCase):
         self.assertTrue(download_button.disabled)  # Should be initially disabled
         
         # Test clear button
-        self.assertEqual(clear_button.text, "Clear")
+        self.assertEqual(clear_button.text, "Reset")
         self.assertEqual(clear_button.width, 120)
         
         # Test button row has correct components
@@ -83,15 +83,15 @@ class TestUIFactory(unittest.TestCase):
         
         # Test status text
         self.assertEqual(status_text.value, "Ready to download")
-        self.assertEqual(status_text.size, 16)
+        self.assertEqual(status_text.size, 14)
         
         # Test progress bar
-        self.assertEqual(progress_bar.width, 600)
+        self.assertEqual(progress_bar.width, 580)
         self.assertFalse(progress_bar.visible)  # Should be initially hidden
         
         # Test progress info
         self.assertEqual(progress_info.value, "")
-        self.assertEqual(progress_info.size, 12)
+        self.assertEqual(progress_info.size, 11)
         self.assertFalse(progress_info.visible)  # Should be initially hidden
     
     def test_create_video_info_card(self):
@@ -100,7 +100,7 @@ class TestUIFactory(unittest.TestCase):
         
         # Test card properties
         self.assertFalse(video_info_card.visible)  # Should be initially hidden
-        self.assertEqual(video_info_card.elevation, 2)
+        self.assertEqual(video_info_card.elevation, 1)
         
         # Test card content structure
         info_column = video_info_card.content.content
@@ -113,8 +113,8 @@ class TestUIFactory(unittest.TestCase):
         
         # Test config section structure
         column = config_info.content
-        self.assertEqual(len(column.controls), 3)  # Title + Format + Subtitles
-        self.assertEqual(column.controls[0].value, "Download Settings")
+        self.assertEqual(len(column.controls), 2)  # Title + Combined settings line
+        self.assertEqual(column.controls[0].value, "Settings")
     
     def test_create_theme_button(self):
         """Test theme button creation"""
@@ -138,7 +138,7 @@ class TestUIFactory(unittest.TestCase):
         main_card = create_main_card(components)
         
         # Test card properties
-        self.assertEqual(main_card.elevation, 8)
+        self.assertEqual(main_card.elevation, 4)
         
         # Test card content
         column = main_card.content.content
