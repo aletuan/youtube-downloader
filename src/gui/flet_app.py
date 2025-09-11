@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import core functionality
-from core.downloader import download_youtube_video, _get_video_info
+from core.downloader import download_youtube_video, _get_video_info, _check_video_exists
 from core.utils import sanitize_filename
 from config.settings import (
     DEFAULT_OUTPUT_DIR,
@@ -107,7 +107,8 @@ def main(page: ft.Page):
                 ft.Text("Video Information", weight=ft.FontWeight.BOLD, size=16),
                 ft.Text("", key="video_title"),
                 ft.Text("", key="video_id"),
-                ft.Text("", key="video_duration"),
+                ft.Text("", key="video_folder"),
+                ft.Text("", key="download_status"),
             ], spacing=5),
             padding=15,
             border_radius=10
@@ -164,20 +165,38 @@ def main(page: ft.Page):
             try:
                 # Get video information
                 video_title, video_id = _get_video_info(url)
+                output_dir = output_dir_input.value.strip() or DEFAULT_OUTPUT_DIR
+                
+                # Check if video already exists
+                exists, video_folder, existing_files = _check_video_exists(output_dir, video_title, video_id)
                 
                 # Update video info display
                 info_column = video_info_card.content.content
                 info_column.controls[1].value = f"Title: {video_title}"
                 info_column.controls[2].value = f"ID: {video_id}"
-                info_column.controls[3].value = f"Output folder: {sanitize_filename(video_title)}_{video_id}/"
+                info_column.controls[3].value = f"Output folder: {video_folder.name}/"
                 
-                # Show video info card
+                # Update download status based on existence
+                if exists:
+                    info_column.controls[4].value = f"⚠️ Already downloaded! Files: {', '.join(existing_files)}"
+                    info_column.controls[4].color = ft.Colors.ORANGE_600
+                    download_button.text = "Re-download Video"
+                    download_button.bgcolor = ft.Colors.ORANGE_400
+                    download_button.icon = ft.Icons.REFRESH
+                    status_text.value = "⚠️ Video already exists. Click Re-download to download again."
+                    status_text.color = ft.Colors.ORANGE_600
+                else:
+                    info_column.controls[4].value = "✅ Ready to download"
+                    info_column.controls[4].color = ft.Colors.GREEN_600
+                    download_button.text = "Download Video"
+                    download_button.bgcolor = ft.Colors.RED_400
+                    download_button.icon = ft.Icons.DOWNLOAD
+                    status_text.value = "✅ Video information loaded. Ready to download!"
+                    status_text.color = ft.Colors.GREEN_600
+                
+                # Show video info card and enable download
                 video_info_card.visible = True
                 download_button.disabled = False
-                
-                # Success status
-                status_text.value = "✅ Video information loaded. Ready to download!"
-                status_text.color = ft.Colors.GREEN_600
                 
             except Exception as error:
                 # Error handling
@@ -238,8 +257,12 @@ def main(page: ft.Page):
         # Run download in separate thread to avoid blocking UI
         def download_thread():
             try:
+                # Check if this is a re-download
+                is_redownload = download_button.text == "Re-download Video"
+                action_text = "Re-downloading" if is_redownload else "Downloading"
+                
                 # Update status with more details
-                status_text.value = f"🔄 Downloading video to {output_dir}..."
+                status_text.value = f"🔄 {action_text} video to {output_dir}..."
                 page.update()
                 
                 # Perform download with enhanced error handling
@@ -249,9 +272,13 @@ def main(page: ft.Page):
                 try:
                     video_title, video_id = _get_video_info(url)
                     final_folder = Path(output_dir) / f"{video_title}_{video_id}"
-                    status_text.value = f"✅ Download completed!\nSaved to: {final_folder}"
+                    if is_redownload:
+                        status_text.value = f"✅ Re-download completed!\nSaved to: {final_folder}"
+                    else:
+                        status_text.value = f"✅ Download completed!\nSaved to: {final_folder}"
                 except:
-                    status_text.value = f"✅ Download completed! Saved to: {output_dir}"
+                    action_text = "Re-download" if is_redownload else "Download"
+                    status_text.value = f"✅ {action_text} completed! Saved to: {output_dir}"
                 
                 status_text.color = ft.Colors.GREEN_600
                 
@@ -287,7 +314,13 @@ def main(page: ft.Page):
         status_text.color = ft.Colors.GREY_700
         progress_bar.visible = False
         video_info_card.visible = False
-        download_button.disabled = True  # Disable until preview is done
+        
+        # Reset download button to original state
+        download_button.disabled = True
+        download_button.text = "Download Video"
+        download_button.bgcolor = ft.Colors.RED_400
+        download_button.icon = ft.Icons.DOWNLOAD
+        
         page.update()
     
     # Create buttons

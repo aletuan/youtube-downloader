@@ -16,7 +16,8 @@ from core.downloader import (
     download_youtube_video,
     _get_video_info,
     _create_video_folder,
-    _get_yt_dlp_options
+    _get_yt_dlp_options,
+    _check_video_exists
 )
 from core.utils import sanitize_filename
 
@@ -26,7 +27,8 @@ __all__ = [
     'sanitize_filename',
     '_get_video_info',
     '_create_video_folder', 
-    '_get_yt_dlp_options'
+    '_get_yt_dlp_options',
+    '_check_video_exists'
 ]
 
 if __name__ == "__main__":

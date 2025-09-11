@@ -14,7 +14,8 @@ from core.downloader import (
     download_youtube_video,
     _get_video_info,
     _create_video_folder,
-    _get_yt_dlp_options
+    _get_yt_dlp_options,
+    _check_video_exists
 )
 
 
@@ -135,6 +136,96 @@ class TestGetYtDlpOptions(unittest.TestCase):
         
         expected_template = "/test/My Video_test123/%(title)s.%(ext)s"
         self.assertEqual(options['outtmpl'], expected_template)
+
+
+class TestCheckVideoExists(unittest.TestCase):
+    """Test cases for the _check_video_exists function"""
+    
+    def setUp(self):
+        """Set up test fixtures before each test method"""
+        self.temp_dir = tempfile.mkdtemp()
+    
+    def tearDown(self):
+        """Clean up after each test method"""
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+    
+    def test_check_video_not_exists(self):
+        """Test checking for non-existent video"""
+        exists, video_folder, files = _check_video_exists(self.temp_dir, "Test Video", "test123")
+        
+        self.assertFalse(exists)
+        self.assertEqual(video_folder.name, "Test Video_test123")
+        self.assertEqual(files, [])
+    
+    def test_check_video_folder_exists_no_video_files(self):
+        """Test checking when folder exists but no video files"""
+        # Create folder but no video files
+        video_folder = Path(self.temp_dir) / "Test Video_test123"
+        video_folder.mkdir(parents=True)
+        
+        # Create some non-video files
+        (video_folder / "subtitles.vtt").touch()
+        (video_folder / "info.json").touch()
+        
+        exists, returned_folder, files = _check_video_exists(self.temp_dir, "Test Video", "test123")
+        
+        self.assertFalse(exists)
+        self.assertEqual(returned_folder, video_folder)
+        self.assertEqual(files, [])
+    
+    def test_check_video_exists_with_video_files(self):
+        """Test checking when video files exist"""
+        # Create folder and video files
+        video_folder = Path(self.temp_dir) / "Test Video_test123"
+        video_folder.mkdir(parents=True)
+        
+        # Create video files
+        (video_folder / "test_video.mp4").touch()
+        (video_folder / "subtitles.vtt").touch()
+        
+        exists, returned_folder, files = _check_video_exists(self.temp_dir, "Test Video", "test123")
+        
+        self.assertTrue(exists)
+        self.assertEqual(returned_folder, video_folder)
+        self.assertIn("test_video.mp4", files)
+        self.assertEqual(len(files), 1)  # Only video files, not subtitles
+    
+    def test_check_video_exists_multiple_video_files(self):
+        """Test checking with multiple video files"""
+        # Create folder and multiple video files
+        video_folder = Path(self.temp_dir) / "Test Video_test123"
+        video_folder.mkdir(parents=True)
+        
+        # Create multiple video files
+        (video_folder / "video.mp4").touch()
+        (video_folder / "video.mkv").touch()
+        (video_folder / "audio.m4a").touch()  # This shouldn't be counted as video
+        
+        exists, returned_folder, files = _check_video_exists(self.temp_dir, "Test Video", "test123")
+        
+        self.assertTrue(exists)
+        self.assertEqual(len(files), 2)  # Only .mp4 and .mkv
+        self.assertIn("video.mp4", files)
+        self.assertIn("video.mkv", files)
+        self.assertNotIn("audio.m4a", files)
+    
+    def test_check_video_exists_case_insensitive_extensions(self):
+        """Test that video extension checking is case insensitive"""
+        # Create folder and video files with different cases
+        video_folder = Path(self.temp_dir) / "Test Video_test123"
+        video_folder.mkdir(parents=True)
+        
+        # Create video files with different case extensions
+        (video_folder / "video.MP4").touch()
+        (video_folder / "video.MKV").touch()
+        
+        exists, returned_folder, files = _check_video_exists(self.temp_dir, "Test Video", "test123")
+        
+        self.assertTrue(exists)
+        self.assertEqual(len(files), 2)
+        self.assertIn("video.MP4", files)
+        self.assertIn("video.MKV", files)
 
 
 class TestDownloadYoutubeVideo(unittest.TestCase):

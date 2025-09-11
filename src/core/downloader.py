@@ -23,6 +23,30 @@ def _get_video_info(url):
         return video_title, video_id
 
 
+def _check_video_exists(output_dir, video_title, video_id):
+    """Check if a video already exists in the output directory
+    
+    Returns:
+        tuple: (exists: bool, video_folder: Path, existing_files: list)
+    """
+    video_folder = Path(output_dir) / f"{video_title}_{video_id}"
+    
+    if not video_folder.exists():
+        return False, video_folder, []
+    
+    # Check for video files (common video extensions)
+    video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.flv', '.m4v']
+    existing_files = []
+    
+    for file_path in video_folder.iterdir():
+        if file_path.is_file():
+            # Check if it's a video file
+            if any(file_path.suffix.lower() == ext for ext in video_extensions):
+                existing_files.append(file_path.name)
+    
+    return len(existing_files) > 0, video_folder, existing_files
+
+
 def _create_video_folder(output_dir, video_title, video_id):
     """Create and return the folder path for a specific video"""
     Path(output_dir).mkdir(exist_ok=True)
