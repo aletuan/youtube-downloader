@@ -13,6 +13,7 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
 - **`src/core/downloader.py`**: Core YouTube download functionality
   - **`download_youtube_video(url, output_dir)`**: Main download function
   - **`_get_video_info(url)`**: Extract video metadata without downloading
+  - **`_check_video_exists(output_dir, video_title, video_id)`**: Check for existing downloads with duplicate detection
   - **`_create_video_folder(output_dir, video_title, video_id)`**: Create video-specific folders
   - **`_get_yt_dlp_options(video_folder)`**: Configure yt-dlp download options
 
@@ -23,7 +24,9 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
   - Default output directory, subtitle languages, video format settings
 
 - **`src/gui/flet_app.py`**: GUI application using Flet framework
-  - Modern Material Design interface for future YouTube downloader GUI
+  - Modern Material Design interface with preview and duplicate detection
+  - Threading support for non-blocking downloads and video info fetching
+  - Dynamic UI states for existing video handling (re-download workflow)
 
 ### Backward Compatibility
 
@@ -81,7 +84,7 @@ coverage html
 # Run YouTube downloader (interactive mode)
 python youtube_downloader.py
 
-# Run Flet GUI demo
+# Run Flet GUI application
 python src/gui/flet_app.py
 
 # Direct usage (import in Python)
@@ -95,24 +98,27 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 
 ### Test Structure
 
-- **`tests/test_downloader.py`**: 10 tests covering core download functionality
-  - TestGetVideoInfo: Video metadata extraction
-  - TestCreateVideoFolder: Folder creation logic
-  - TestGetYtDlpOptions: Configuration testing
-  - TestDownloadYoutubeVideo: End-to-end download testing
+- **`tests/test_downloader.py`**: 15 tests covering core download functionality
+  - TestGetVideoInfo: Video metadata extraction (3 tests)
+  - TestCreateVideoFolder: Folder creation logic (3 tests)
+  - TestGetYtDlpOptions: Configuration testing (2 tests)
+  - TestCheckVideoExists: Duplicate detection functionality (5 tests)
+  - TestDownloadYoutubeVideo: End-to-end download testing (2 tests)
   
 - **`tests/test_utils.py`**: 6 tests covering utility functions
   - TestSanitizeFilename: Filename sanitization edge cases
   
-- **`tests/test_flet_setup.py`**: 2 tests covering GUI framework
-  - Flet import and component creation testing
+- **`tests/test_flet_setup.py`**: 11 tests covering GUI framework
+  - TestFletFramework: Flet import and component creation (4 tests)
+  - TestGUIIntegration: GUI integration with core functionality (4 tests)
+  - TestGUIErrorHandling: Error handling scenarios (3 tests)
 
 ### Testing Strategy
 
 - **Mocking Strategy**: Uses `MagicMock` to simulate yt-dlp's `YoutubeDL` context manager
 - **Temp Directories**: All file system tests use temporary directories for isolation
 - **Network Isolation**: No actual network calls during testing
-- **Total Coverage**: 18 tests across all modules with comprehensive coverage
+- **Total Coverage**: 32 tests across all modules with comprehensive coverage
 
 ## File Organization
 
@@ -131,9 +137,9 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 │       └── flet_app.py           # GUI application (Flet framework)
 ├── tests/                         # Modern test suite
 │   ├── __init__.py
-│   ├── test_downloader.py        # Core functionality tests (10 tests)
+│   ├── test_downloader.py        # Core functionality tests (15 tests)
 │   ├── test_utils.py             # Utility tests (6 tests)
-│   └── test_flet_setup.py        # GUI framework tests (2 tests)
+│   └── test_flet_setup.py        # GUI framework tests (11 tests)
 ├── youtube_downloader.py         # Backward compatibility wrapper
 ├── requirements.txt              # Python dependencies (yt-dlp, flet)
 ├── CLAUDE.md                     # This documentation file
@@ -187,7 +193,17 @@ def test_legacy_function(self, mock_yt_dlp):
 The project supports multiple development phases:
 
 1. **✅ Phase 1 Complete**: Professional project structure reorganization
-2. **Phase 2 (Future)**: YouTube Downloader GUI implementation using Flet
+2. **✅ Phase 2 Complete**: YouTube Downloader GUI implementation using Flet
+   - Modern Material Design interface with Flet framework
+   - Video preview with metadata extraction
+   - Duplicate detection and re-download workflow
+   - Threading support for non-blocking operations
+   - Enhanced error handling and user feedback
 3. **Phase 3 (Future)**: Advanced features and optimizations
+   - Batch download support
+   - Quality/format selection options
+   - Download progress tracking
+   - Playlist support
+   - Advanced subtitle options
 
-Current status: All core functionality preserved with modern, maintainable architecture.
+Current status: Full-featured YouTube downloader with modern GUI and comprehensive duplicate detection.
