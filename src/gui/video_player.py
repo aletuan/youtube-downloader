@@ -14,6 +14,7 @@ class VideoPlayerScreen:
         self.page = page
         self.video_path: Optional[str] = None
         self.video_title: Optional[str] = None
+        self.temp_hidden_files: list = []
         
     def create_player_view(self, video_path: str, video_title: str = "Video") -> ft.View:
         """Create the video player view"""
@@ -148,61 +149,47 @@ class VideoPlayerScreen:
             
             # Look for subtitle files in the same directory
             video_dir = Path(self.video_path).parent
-            subtitle_file = None
             
-            # Prioritize Vietnamese subtitle - if it exists, use it exclusively
-            vietnamese_subtitle_found = False
+            # Check for Vietnamese and English subtitles
+            vietnamese_subtitle = None
+            english_subtitle = None
+            
             for vn_subtitle in video_dir.glob("*.vi.vtt"):
-                subtitle_file = os.path.abspath(str(vn_subtitle))
-                vietnamese_subtitle_found = True
-                print(f"[DEBUG] Using Vietnamese subtitle exclusively: {vn_subtitle.name}")
+                vietnamese_subtitle = vn_subtitle
+                print(f"[DEBUG] Found Vietnamese subtitle: {vn_subtitle.name}")
+                break
+                
+            for en_subtitle in video_dir.glob("*.en.vtt"):
+                english_subtitle = en_subtitle
+                print(f"[DEBUG] Found English subtitle: {en_subtitle.name}")
                 break
             
-            # Only use English subtitle if no Vietnamese subtitle exists
-            if not vietnamese_subtitle_found:
-                for en_subtitle in video_dir.glob("*.en.vtt"):
-                    subtitle_file = os.path.abspath(str(en_subtitle))
-                    print(f"[DEBUG] No Vietnamese subtitle found, using English: {en_subtitle.name}")
-                    break
-            
-            # Create video media with subtitle prioritization
             print(f"[DEBUG] Loading video: {absolute_path}")
             
-            if subtitle_file:
-                print(f"[DEBUG] Loading with preferred subtitle: {subtitle_file}")
+            # Strategy: Temporarily hide English subtitles when Vietnamese subtitles exist
+            # This ensures Flet Video widget only sees Vietnamese subtitles and uses them by default
+            temp_hidden_files = []
+            
+            try:
+                if vietnamese_subtitle and english_subtitle:
+                    # Hide English subtitle temporarily so Vietnamese becomes the only option
+                    temp_name = english_subtitle.with_suffix(".en.vtt.hidden")
+                    english_subtitle.rename(temp_name)
+                    temp_hidden_files.append((temp_name, english_subtitle))
+                    print(f"[DEBUG] Temporarily hiding English subtitle to prioritize Vietnamese")
                 
-                # Strategy: Temporarily rename files to ensure Vietnamese gets priority
-                # This is a workaround for Flet's limited subtitle control
-                temp_renamed_files = []
+                # Create video media - now only Vietnamese subtitle (if it exists) will be visible
+                video_media = ft.VideoMedia(absolute_path)
                 
-                try:
-                    if vietnamese_subtitle_found:
-                        # If Vietnamese subtitle exists, temporarily hide English subtitles
-                        # so the video player only sees Vietnamese
-                        for en_subtitle in video_dir.glob("*.en.vtt"):
-                            if en_subtitle.exists():
-                                temp_name = en_subtitle.with_suffix(".en.vtt.temp")
-                                en_subtitle.rename(temp_name)
-                                temp_renamed_files.append((temp_name, en_subtitle))
-                                print(f"[DEBUG] Temporarily hiding English subtitle: {en_subtitle.name}")
-                    
-                    # Now create video media - Vietnamese should be the only/primary subtitle
-                    video_media = ft.VideoMedia(absolute_path)
-                    
-                except Exception as rename_error:
-                    print(f"[DEBUG] Subtitle prioritization error: {rename_error}")
-                    video_media = ft.VideoMedia(absolute_path)
-                
-                # Restore renamed files after video creation
-                for temp_file, original_file in temp_renamed_files:
+            except Exception as subtitle_error:
+                print(f"[DEBUG] Error managing subtitles: {subtitle_error}")
+                # Restore any hidden files if there was an error
+                for temp_file, original_file in temp_hidden_files:
                     try:
                         if temp_file.exists():
                             temp_file.rename(original_file)
-                            print(f"[DEBUG] Restored subtitle file: {original_file.name}")
-                    except Exception as restore_error:
-                        print(f"[DEBUG] Error restoring subtitle: {restore_error}")
-            else:
-                print(f"[DEBUG] Loading video without subtitles")
+                    except:
+                        pass
                 video_media = ft.VideoMedia(absolute_path)
             
             video = ft.Video(
@@ -216,6 +203,9 @@ class VideoPlayerScreen:
                 show_controls=True,
                 playback_rate=1.0,
             )
+            
+            # Store reference to hidden files for cleanup
+            self.temp_hidden_files = temp_hidden_files
             
             return video
             
@@ -243,6 +233,9 @@ class VideoPlayerScreen:
     def _on_back_click(self, e):
         """Handle back button click - navigate back to main downloader screen"""
         try:
+            # Restore any hidden subtitle files before navigating away
+            self._restore_hidden_files()
+            
             print(f"[DEBUG] Back button clicked. Current views: {len(self.page.views)}")
             
             # Remove current video player view from stack
@@ -263,6 +256,19 @@ class VideoPlayerScreen:
             self.page.go("/")
     
     # Video control event handlers removed - ft.Video handles controls internally
+    
+    def _restore_hidden_files(self):
+        """Restore any temporarily hidden subtitle files"""
+        for temp_file, original_file in self.temp_hidden_files:
+            try:
+                if temp_file.exists():
+                    temp_file.rename(original_file)
+                    print(f"[DEBUG] Restored hidden subtitle: {original_file.name}")
+            except Exception as restore_error:
+                print(f"[DEBUG] Error restoring subtitle {original_file.name}: {restore_error}")
+        
+        # Clear the list after restoration
+        self.temp_hidden_files.clear()
     
     def _get_subtitle_info(self) -> ft.Container:
         """Get subtitle availability information"""
