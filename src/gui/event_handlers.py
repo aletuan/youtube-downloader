@@ -225,6 +225,12 @@ def handle_download_click(
                         status_text.value = f"✅ {action_text} completed!"
                         progress_info.value = f"Completed in {progress.elapsed:.1f}s"
                         
+                    elif progress.status == "translating":
+                        # Translation in progress
+                        progress_bar.value = None  # Indeterminate progress for translation
+                        status_text.value = f"🌐 Translating subtitles to Vietnamese..."
+                        progress_info.value = "Translating subtitles using Claude AI..."
+                        
                     elif progress.status == "error":
                         # Download error
                         status_text.value = f"❌ {action_text} failed"
