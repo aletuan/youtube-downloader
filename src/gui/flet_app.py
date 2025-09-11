@@ -9,6 +9,8 @@ import flet as ft
 import sys
 import os
 import threading
+import platform
+import subprocess
 from pathlib import Path
 
 # Add parent directories to path for imports
@@ -17,7 +19,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import core functionality
 from core.downloader import download_youtube_video, _get_video_info, _check_video_exists
-from core.utils import sanitize_filename
 from config.settings import (
     DEFAULT_OUTPUT_DIR,
     SUBTITLE_LANGUAGES,
@@ -35,6 +36,16 @@ def main(page: ft.Page):
     page.window_height = 600
     page.window_resizable = True
     page.padding = 20
+    
+    # Keyboard shortcut handler (will be set after functions are defined)
+    def setup_keyboard_shortcuts():
+        def on_keyboard(e: ft.KeyboardEvent):
+            if e.ctrl and e.key == "o":
+                browse_folder(None)  # Trigger folder browse with Ctrl+O
+            elif e.ctrl and e.key == "Enter":
+                if not download_button.disabled:
+                    on_download_click(None)  # Trigger download with Ctrl+Enter
+        page.on_keyboard_event = on_keyboard
     
     # Create UI components
     title = ft.Text(
@@ -63,22 +74,90 @@ def main(page: ft.Page):
     output_dir_input = ft.TextField(
         label="Output Directory",
         value=DEFAULT_OUTPUT_DIR,
-        width=500,
+        width=520,
         border_radius=10,
-        prefix_icon=ft.Icons.FOLDER
+        prefix_icon=ft.Icons.FOLDER,
+        hint_text="Select or enter output directory path"
     )
     
-    # Browse button for output directory
-    def browse_folder(e):
-        def get_directory_result(e: ft.FilePickerResultEvent):
-            if e.path:
+    # Simple helper to get user home shortcuts
+    def get_common_folders():
+        """Get common user folders"""
+        import os
+        return {
+            "Desktop": os.path.expanduser("~/Desktop"),
+            "Documents": os.path.expanduser("~/Documents"), 
+            "Downloads": os.path.expanduser("~/Downloads"),
+            "Movies": os.path.expanduser("~/Movies"),
+            "Home": os.path.expanduser("~")
+        }
+
+    # Flet FilePicker callback (fallback for other platforms)  
+    def get_directory_result(e: ft.FilePickerResultEvent):
+        if e.path:
+            selected_path = Path(e.path)
+            if selected_path.exists() and selected_path.is_dir():
                 output_dir_input.value = e.path
-                page.update()
-        
-        get_directory_dialog = ft.FilePicker(on_result=get_directory_result)
-        page.overlay.append(get_directory_dialog)
+                status_text.value = f"✅ Output directory set: {selected_path.name}/"
+                status_text.color = ft.Colors.GREEN_600
+            else:
+                status_text.value = f"❌ Invalid directory selected: {e.path}"
+                status_text.color = ft.Colors.RED_600
+        else:
+            status_text.value = "Ready to download"
+            status_text.color = ft.Colors.GREY_700
         page.update()
-        get_directory_dialog.get_directory_path()
+    
+    # Create the FilePicker as fallback
+    file_picker = ft.FilePicker(on_result=get_directory_result)
+    
+    # Browse button for output directory  
+    def browse_folder(_):
+        # Simple fallback approach for macOS
+        def show_folder_help():
+            status_text.value = "💡 Click here to set common folders: Desktop, Documents, Downloads"
+            status_text.color = ft.Colors.BLUE_600
+            page.update()
+            
+        def folder_thread():
+            # Try native dialog with very short timeout
+            selected_path = None
+            if platform.system() == "Darwin":  # macOS
+                try:
+                    result = subprocess.run([
+                        "osascript", "-e", 
+                        'tell application "Finder" to return POSIX path of (choose folder with prompt "Select Output Directory")'
+                    ], capture_output=True, text=True, timeout=5)  # Very short timeout
+                    if result.returncode == 0:
+                        selected_path = result.stdout.strip()
+                except (subprocess.TimeoutExpired, Exception):
+                    selected_path = None
+            
+            if selected_path:
+                # Success - update UI
+                path_obj = Path(selected_path)
+                if path_obj.exists() and path_obj.is_dir():
+                    output_dir_input.value = selected_path
+                    status_text.value = f"✅ Output directory set: {path_obj.name}/"
+                    status_text.color = ft.Colors.GREEN_600
+            else:
+                # Failed - show helpful shortcuts
+                shortcuts = get_common_folders()
+                
+                # Set to Downloads as a good default
+                downloads_path = shortcuts["Downloads"]
+                if Path(downloads_path).exists():
+                    output_dir_input.value = downloads_path
+                    status_text.value = f"📥 Set to Downloads folder. You can edit the path above or drag & drop a folder."
+                    status_text.color = ft.Colors.BLUE_600
+                else:
+                    status_text.value = "📝 Please type or paste your desired folder path above"
+                    status_text.color = ft.Colors.ORANGE_600
+            
+            page.update()
+        
+        # Run in thread
+        threading.Thread(target=folder_thread, daemon=True).start()
     
     browse_button = ft.IconButton(
         ft.Icons.FOLDER_OPEN,
@@ -138,7 +217,7 @@ def main(page: ft.Page):
     )
     
     # Preview button click handler
-    def on_preview_click(e):
+    def on_preview_click(_):
         url = url_input.value.strip()
         
         # Validate URL
@@ -214,7 +293,7 @@ def main(page: ft.Page):
         threading.Thread(target=preview_thread, daemon=True).start()
     
     # Download button click handler
-    def on_download_click(e):
+    def on_download_click(_):
         url = url_input.value.strip()
         output_dir = output_dir_input.value.strip()
         
@@ -307,7 +386,7 @@ def main(page: ft.Page):
         threading.Thread(target=download_thread, daemon=True).start()
     
     # Clear button handler
-    def on_clear_click(e):
+    def on_clear_click(_):
         url_input.value = ""
         output_dir_input.value = DEFAULT_OUTPUT_DIR
         status_text.value = "Ready to download"
@@ -361,7 +440,7 @@ def main(page: ft.Page):
     )
     
     # Theme toggle button
-    def toggle_theme(e):
+    def toggle_theme(_):
         page.theme_mode = (
             ft.ThemeMode.DARK 
             if page.theme_mode == ft.ThemeMode.LIGHT 
@@ -411,6 +490,12 @@ def main(page: ft.Page):
         color=ft.Colors.GREY_500,
         text_align=ft.TextAlign.CENTER
     )
+    
+    # Add FilePicker to page overlay
+    page.overlay.append(file_picker)
+    
+    # Setup keyboard shortcuts now that all functions are defined
+    setup_keyboard_shortcuts()
     
     # Add components to page
     page.add(
