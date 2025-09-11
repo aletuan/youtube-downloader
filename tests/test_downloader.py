@@ -118,7 +118,8 @@ class TestGetYtDlpOptions(unittest.TestCase):
         video_folder = Path("/test/folder")
         options = _get_yt_dlp_options(video_folder)
         
-        expected_options = {
+        # Test core required options (ignore anti-bot headers for test)
+        required_options = {
             'outtmpl': str(video_folder / '%(title)s.%(ext)s'),
             'format': 'best',
             'writesubtitles': True,
@@ -127,7 +128,14 @@ class TestGetYtDlpOptions(unittest.TestCase):
             'subtitlesformat': 'vtt',
         }
         
-        self.assertEqual(options, expected_options)
+        # Check that all required options are present
+        for key, value in required_options.items():
+            self.assertIn(key, options)
+            self.assertEqual(options[key], value)
+        
+        # Check that anti-bot headers are present
+        self.assertIn('http_headers', options)
+        self.assertIn('User-Agent', options['http_headers'])
     
     def test_get_yt_dlp_options_output_template(self):
         """Test that output template is correctly formatted"""
