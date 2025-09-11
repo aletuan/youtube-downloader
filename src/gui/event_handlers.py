@@ -394,7 +394,9 @@ def handle_play_click(page: ft.Page, video_title: str = "Video"):
     player_view = player_screen.create_player_view(_last_downloaded_video_path, video_title)
     
     # Navigate to video player
+    print(f"[DEBUG] Current views before adding player: {len(page.views)}")
     page.views.append(player_view)
+    print(f"[DEBUG] Views after adding player: {len(page.views)}")
     page.update()
     
     print("[DEBUG] Video player screen should now be displayed")

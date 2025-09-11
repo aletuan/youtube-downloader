@@ -258,8 +258,26 @@ class VideoPlayerScreen:
         )
     
     def _on_back_click(self, e):
-        """Handle back button click"""
-        self.page.go("/")
+        """Handle back button click - navigate back to main downloader screen"""
+        try:
+            print(f"[DEBUG] Back button clicked. Current views: {len(self.page.views)}")
+            
+            # Remove current video player view from stack
+            if len(self.page.views) > 1:
+                print("[DEBUG] Popping video player view from stack")
+                self.page.views.pop()
+                print(f"[DEBUG] Views after pop: {len(self.page.views)}")
+                self.page.update()
+                print("[DEBUG] Page updated after view pop")
+            else:
+                print("[DEBUG] Only one view in stack, using page.go fallback")
+                # Fallback: navigate to main route
+                self.page.go("/")
+        except Exception as e:
+            print(f"[DEBUG] Error in back navigation: {e}")
+            print("[DEBUG] Using fallback navigation")
+            # Fallback navigation
+            self.page.go("/")
     
     def _on_play_click(self, e):
         """Handle play button click"""

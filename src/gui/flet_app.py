@@ -166,9 +166,18 @@ def main(page: ft.Page):
         page.update()
     
     def on_view_pop(view):
-        page.views.pop()
-        top_view = page.views[-1]
-        page.go(top_view.route)
+        print(f"[DEBUG] View pop event triggered. Current views: {len(page.views)}")
+        if len(page.views) > 1:
+            page.views.pop()
+            if page.views:
+                top_view = page.views[-1]
+                print(f"[DEBUG] Navigating to route: {top_view.route}")
+                page.go(top_view.route)
+            else:
+                print("[DEBUG] No views remaining, going to root")
+                page.go("/")
+        else:
+            print("[DEBUG] Only one view, staying on current route")
     
     page.on_route_change = on_route_change
     page.on_view_pop = on_view_pop
