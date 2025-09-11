@@ -218,13 +218,10 @@ The project supports multiple development phases:
      - [x] Built-in video controls (native play/pause/stop/seek)
      - [x] Error handling for missing video files and unsupported formats
      - [x] Simplified UI design (removed redundant controls and info sections)
-     - [x] Multiple video format support (.mp4, .mkv, .webm, .avi, .mov, .m4v, .flv)
-     - [ ] End-to-end testing with actual downloaded videos
-     - [ ] Subtitle display integration in video player
-     - [ ] Video player responsive design optimization
-   - [ ] Batch download support
+     - [x] Multiple video format support (.mp4, .mkv, .webm, .avi, .mov, .m4v, .flv)videos
+     - [x] Subtitle display integration in video player
    - [ ] Quality/format selection options
    - [ ] Playlist support
-   - [ ] Advanced subtitle options
+   - [ ] Advanced subtitle - using Clause API to translate to Vietnamese
 
 Current status: Full-featured YouTube downloader with modern GUI, comprehensive duplicate detection, download progress tracking, and integrated video player functionality with local file playback (mostly complete, end-to-end testing needed).

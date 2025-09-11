@@ -9,12 +9,19 @@ from config.settings import DEFAULT_OUTPUT_DIR, VIDEO_FORMAT, SUBTITLE_LANGUAGES
 
 def create_header_section() -> tuple:
     """Create header title and subtitle components"""
-    title = ft.Text(
-        "YouTube Downloader",
-        size=32,
-        weight=ft.FontWeight.BOLD,
-        color=ft.Colors.RED_400
-    )
+    title = ft.Row([
+        ft.Icon(
+            ft.Icons.SMART_DISPLAY,  # YouTube-like video icon
+            size=40,
+            color=ft.Colors.RED_400
+        ),
+        ft.Text(
+            "YouTube Downloader",
+            size=32,
+            weight=ft.FontWeight.BOLD,
+            color=ft.Colors.RED_400
+        )
+    ], alignment=ft.MainAxisAlignment.CENTER, spacing=10)
     
     subtitle = ft.Text(
         "Download YouTube videos with subtitles",

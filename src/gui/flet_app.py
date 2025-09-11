@@ -146,7 +146,10 @@ def main(page: ft.Page):
                             ),
                             main_card,
                             ft.Container(expand=True),  # Spacer to push footer to bottom
-                            footer
+                            ft.Container(
+                                content=footer,
+                                margin=ft.margin.only(bottom=100)  # Move footer up by 100 pixels 
+                            )
                         ],
                         expand=True,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

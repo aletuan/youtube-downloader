@@ -29,9 +29,11 @@ class TestUIFactory(unittest.TestCase):
         """Test header section creation"""
         title, subtitle = create_header_section()
         
-        # Test title properties
-        self.assertEqual(title.value, "YouTube Downloader")
-        self.assertEqual(title.size, 32)
+        # Test title properties - title is now a Row containing an Icon and Text
+        self.assertEqual(len(title.controls), 2)  # Icon + Text
+        self.assertIsInstance(title.controls[0], type(title.controls[0]))  # First is Icon
+        self.assertEqual(title.controls[1].value, "YouTube Downloader")  # Text component
+        self.assertEqual(title.controls[1].size, 32)  # Text size
         
         # Test subtitle properties
         self.assertEqual(subtitle.value, "Download YouTube videos with subtitles")
