@@ -79,7 +79,7 @@ def main(page: ft.Page):
     def on_preview_click(_):
         handle_preview_click(
             page, url_input, output_dir_input, status_text, 
-            video_info_card, download_button, preview_button
+            video_info_card, download_button, preview_button, play_button
         )
     
     def on_download_click(_):

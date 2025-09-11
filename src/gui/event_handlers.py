@@ -71,7 +71,8 @@ def handle_preview_click(
     status_text: ft.Text,
     video_info_card: ft.Card,
     download_button: ft.ElevatedButton,
-    preview_button: ft.ElevatedButton
+    preview_button: ft.ElevatedButton,
+    play_button: ft.ElevatedButton
 ):
     """Handle preview button click"""
     url = url_input.value.strip() if url_input.value else ""
@@ -115,6 +116,24 @@ def handle_preview_click(
                 download_button.icon = ft.Icons.REFRESH
                 status_text.value = "✅ Video information loaded. Click Re-download if needed."
                 status_text.color = ft.Colors.GREEN_600
+                
+                # Set up Play button for existing video
+                global _last_downloaded_video_path
+                _last_downloaded_video_path = None
+                
+                # Find the video file in the existing files
+                video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.m4v', '.flv']
+                for file_name in existing_files:
+                    file_path = video_folder / file_name
+                    if file_path.suffix.lower() in video_extensions:
+                        _last_downloaded_video_path = str(file_path)
+                        print(f"[DEBUG] Found existing video for playback: {_last_downloaded_video_path}")
+                        break
+                
+                # Show Play button if video file was found
+                if play_button and _last_downloaded_video_path:
+                    play_button.visible = True
+                    print(f"[DEBUG] Play button enabled for existing video")
             else:
                 info_column.controls[4].value = "✅ Ready to download"
                 info_column.controls[4].color = ft.Colors.GREEN_600
@@ -123,6 +142,11 @@ def handle_preview_click(
                 download_button.icon = ft.Icons.DOWNLOAD
                 status_text.value = "✅ Video information loaded. Ready to download!"
                 status_text.color = ft.Colors.GREEN_600
+                
+                # Hide Play button for new downloads
+                if play_button:
+                    play_button.visible = False
+                    print(f"[DEBUG] Play button hidden for new download")
             
             # Show video info card and enable download
             video_info_card.visible = True
@@ -283,12 +307,12 @@ def handle_download_click(
                         print(f"[DEBUG] No files found in folder: {final_folder}")
                 
                 if is_redownload:
-                    status_text.value = f"✅ Re-download completed!\nSaved to: {final_folder}"
+                    status_text.value = f"✅ Re-download completed!"
                 else:
-                    status_text.value = f"✅ Download completed!\nSaved to: {final_folder}"
+                    status_text.value = f"✅ Download completed!"
             except:
                 action_text = "Re-download" if is_redownload else "Download"
-                status_text.value = f"✅ {action_text} completed! Saved to: {output_dir}"
+                status_text.value = f"✅ {action_text} completed!"
             
             status_text.color = ft.Colors.GREEN_600
             
