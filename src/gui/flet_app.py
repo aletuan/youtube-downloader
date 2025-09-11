@@ -16,8 +16,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import core functionality
-from core.downloader import download_youtube_video
-from config.settings import DEFAULT_OUTPUT_DIR
+from core.downloader import download_youtube_video, _get_video_info
+from core.utils import sanitize_filename
+from config.settings import (
+    DEFAULT_OUTPUT_DIR,
+    SUBTITLE_LANGUAGES,
+    SUBTITLE_FORMAT,
+    VIDEO_FORMAT
+)
 
 def main(page: ft.Page):
     """Main YouTube Downloader GUI entry point"""
@@ -94,6 +100,35 @@ def main(page: ft.Page):
         color=ft.Colors.GREY_700
     )
     
+    # Video info display (initially hidden)
+    video_info_card = ft.Card(
+        content=ft.Container(
+            content=ft.Column([
+                ft.Text("Video Information", weight=ft.FontWeight.BOLD, size=16),
+                ft.Text("", key="video_title"),
+                ft.Text("", key="video_id"),
+                ft.Text("", key="video_duration"),
+            ], spacing=5),
+            padding=15,
+            border_radius=10
+        ),
+        visible=False,
+        elevation=2
+    )
+    
+    # Configuration display
+    config_info = ft.Container(
+        content=ft.Column([
+            ft.Text("Download Settings", weight=ft.FontWeight.BOLD, size=14, color=ft.Colors.GREY_600),
+            ft.Text(f"Format: {VIDEO_FORMAT}", size=12, color=ft.Colors.GREY_500),
+            ft.Text(f"Subtitles: {', '.join(SUBTITLE_LANGUAGES)} ({SUBTITLE_FORMAT})", size=12, color=ft.Colors.GREY_500),
+        ], spacing=2),
+        padding=10,
+        border_radius=5,
+        bgcolor=ft.Colors.GREY_50,
+        border=ft.border.all(1, ft.Colors.GREY_300)
+    )
+    
     # Progress bar
     progress_bar = ft.ProgressBar(
         width=600,
@@ -101,12 +136,70 @@ def main(page: ft.Page):
         color=ft.Colors.RED_400
     )
     
+    # Preview button click handler
+    def on_preview_click(e):
+        url = url_input.value.strip()
+        
+        # Validate URL
+        if not url:
+            status_text.value = "❌ Please enter a YouTube URL"
+            status_text.color = ft.Colors.RED_600
+            page.update()
+            return
+        
+        if not url.startswith(('https://www.youtube.com/', 'https://youtube.com/', 'https://youtu.be/')):
+            status_text.value = "❌ Please enter a valid YouTube URL"
+            status_text.color = ft.Colors.RED_600
+            page.update()
+            return
+        
+        # Disable preview button and show loading
+        preview_button.disabled = True
+        status_text.value = "🔄 Getting video information..."
+        status_text.color = ft.Colors.BLUE_600
+        page.update()
+        
+        # Run preview in separate thread
+        def preview_thread():
+            try:
+                # Get video information
+                video_title, video_id = _get_video_info(url)
+                
+                # Update video info display
+                info_column = video_info_card.content.content
+                info_column.controls[1].value = f"Title: {video_title}"
+                info_column.controls[2].value = f"ID: {video_id}"
+                info_column.controls[3].value = f"Output folder: {sanitize_filename(video_title)}_{video_id}/"
+                
+                # Show video info card
+                video_info_card.visible = True
+                download_button.disabled = False
+                
+                # Success status
+                status_text.value = "✅ Video information loaded. Ready to download!"
+                status_text.color = ft.Colors.GREEN_600
+                
+            except Exception as error:
+                # Error handling
+                status_text.value = f"❌ Error getting video info: {str(error)}"
+                status_text.color = ft.Colors.RED_600
+                video_info_card.visible = False
+                download_button.disabled = True
+            
+            finally:
+                # Re-enable preview button
+                preview_button.disabled = False
+                page.update()
+        
+        # Start preview thread
+        threading.Thread(target=preview_thread, daemon=True).start()
+    
     # Download button click handler
     def on_download_click(e):
         url = url_input.value.strip()
         output_dir = output_dir_input.value.strip()
         
-        # Validate inputs
+        # Validate inputs (enhanced validation)
         if not url:
             status_text.value = "❌ Please enter a YouTube URL"
             status_text.color = ft.Colors.RED_600
@@ -123,8 +216,20 @@ def main(page: ft.Page):
             output_dir = DEFAULT_OUTPUT_DIR
             output_dir_input.value = DEFAULT_OUTPUT_DIR
         
-        # Disable download button and show progress
+        # Check if output directory exists
+        output_path = Path(output_dir)
+        if not output_path.exists():
+            try:
+                output_path.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                status_text.value = f"❌ Cannot create output directory: {str(e)}"
+                status_text.color = ft.Colors.RED_600
+                page.update()
+                return
+        
+        # Disable buttons and show progress
         download_button.disabled = True
+        preview_button.disabled = True
         progress_bar.visible = True
         status_text.value = "🔄 Starting download..."
         status_text.color = ft.Colors.BLUE_600
@@ -133,25 +238,41 @@ def main(page: ft.Page):
         # Run download in separate thread to avoid blocking UI
         def download_thread():
             try:
-                # Update status
-                status_text.value = "🔄 Downloading video..."
+                # Update status with more details
+                status_text.value = f"🔄 Downloading video to {output_dir}..."
                 page.update()
                 
-                # Perform download
+                # Perform download with enhanced error handling
                 download_youtube_video(url, output_dir)
                 
-                # Success
-                status_text.value = f"✅ Download completed! Saved to: {output_dir}"
+                # Get final video info for success message
+                try:
+                    video_title, video_id = _get_video_info(url)
+                    final_folder = Path(output_dir) / f"{video_title}_{video_id}"
+                    status_text.value = f"✅ Download completed!\nSaved to: {final_folder}"
+                except:
+                    status_text.value = f"✅ Download completed! Saved to: {output_dir}"
+                
                 status_text.color = ft.Colors.GREEN_600
                 
             except Exception as error:
-                # Error handling
-                status_text.value = f"❌ Error: {str(error)}"
+                # Enhanced error handling with more specific messages
+                error_msg = str(error)
+                if "Network" in error_msg or "connection" in error_msg.lower():
+                    status_text.value = f"❌ Network error: Check your internet connection"
+                elif "permission" in error_msg.lower():
+                    status_text.value = f"❌ Permission error: Check folder write permissions"
+                elif "not found" in error_msg.lower():
+                    status_text.value = f"❌ Video not found: Invalid URL or private video"
+                else:
+                    status_text.value = f"❌ Error: {error_msg}"
+                
                 status_text.color = ft.Colors.RED_600
             
             finally:
-                # Re-enable button and hide progress
+                # Re-enable buttons and hide progress
                 download_button.disabled = False
+                preview_button.disabled = False
                 progress_bar.visible = False
                 page.update()
         
@@ -165,17 +286,30 @@ def main(page: ft.Page):
         status_text.value = "Ready to download"
         status_text.color = ft.Colors.GREY_700
         progress_bar.visible = False
+        video_info_card.visible = False
+        download_button.disabled = True  # Disable until preview is done
         page.update()
     
     # Create buttons
+    preview_button = ft.ElevatedButton(
+        "Preview Video",
+        icon=ft.Icons.PREVIEW,
+        on_click=on_preview_click,
+        bgcolor=ft.Colors.BLUE_400,
+        color=ft.Colors.WHITE,
+        width=160,
+        height=50
+    )
+    
     download_button = ft.ElevatedButton(
         "Download Video",
         icon=ft.Icons.DOWNLOAD,
         on_click=on_download_click,
         bgcolor=ft.Colors.RED_400,
         color=ft.Colors.WHITE,
-        width=200,
-        height=50
+        width=180,
+        height=50,
+        disabled=True  # Initially disabled until preview
     )
     
     clear_button = ft.OutlinedButton(
@@ -188,9 +322,9 @@ def main(page: ft.Page):
     
     # Button row
     button_row = ft.Row(
-        [download_button, clear_button],
+        [preview_button, download_button, clear_button],
         alignment=ft.MainAxisAlignment.CENTER,
-        spacing=20
+        spacing=15
     )
     
     # Theme toggle button
@@ -215,20 +349,23 @@ def main(page: ft.Page):
                 [
                     title,
                     subtitle,
-                    ft.Divider(height=30, color=ft.Colors.TRANSPARENT),
+                    ft.Divider(height=25, color=ft.Colors.TRANSPARENT),
                     url_input,
-                    ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                    ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
                     dir_row,
-                    ft.Divider(height=30, color=ft.Colors.TRANSPARENT),
-                    button_row,
+                    ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
+                    config_info,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                    button_row,
+                    ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
+                    video_info_card,
                     progress_bar,
                     status_text,
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=10
+                spacing=8
             ),
-            padding=40,
+            padding=35,
             border_radius=15
         ),
         elevation=8
