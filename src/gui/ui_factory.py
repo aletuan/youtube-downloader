@@ -181,7 +181,7 @@ def create_theme_button() -> ft.IconButton:
 def create_footer() -> ft.Text:
     """Create footer text"""
     footer = ft.Text(
-        "Modern YouTube Downloader with Subtitles • Built with Flet",
+        "Modern YouTube Downloader with Love",
         size=12,
         color=ft.Colors.GREY_500,
         text_align=ft.TextAlign.CENTER

@@ -48,9 +48,9 @@ def main(page: ft.Page):
     
     # Configure window properties using window object
     page.window.width = 1000
-    page.window.height = 850
+    page.window.height = 830
     page.window.min_width = 1000
-    page.window.min_height = 850
+    page.window.min_height = 830
     page.window.resizable = True
     
     # Force update to ensure window size is applied
@@ -138,7 +138,7 @@ def main(page: ft.Page):
                     alignment=ft.MainAxisAlignment.END
                 ),
                 main_card,
-                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.Container(expand=True),  # Spacer to push footer to bottom
                 footer
             ],
             expand=True,

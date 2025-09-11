@@ -127,7 +127,7 @@ class TestUIFactory(unittest.TestCase):
         footer = create_footer()
         
         self.assertTrue("YouTube Downloader" in footer.value)
-        self.assertTrue("Flet" in footer.value)
+        self.assertTrue("Love" in footer.value)
         self.assertEqual(footer.size, 12)
     
     def test_create_main_card(self):
