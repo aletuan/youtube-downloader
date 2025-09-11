@@ -211,6 +211,13 @@ def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR, progress_callback
                     if translated_files:
                         translation_success = True
                         print(f"✅ Successfully translated {len(translated_files)} subtitle file(s)")
+                        
+                        # Send translation completion status to GUI
+                        if progress_callback:
+                            completion_progress = DownloadProgress()
+                            completion_progress.status = "translation_complete"
+                            completion_progress.elapsed = 0
+                            progress_callback(completion_progress)
                     else:
                         print("ℹ️  No subtitles found for translation or translation skipped")
                         

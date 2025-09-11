@@ -15,6 +15,21 @@ try:
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
+# Import configuration settings
+try:
+    from config.settings import (
+        TRANSLATION_BATCH_SIZE,
+        TRANSLATION_RATE_LIMIT_DELAY,
+        TRANSLATION_MAX_TOKENS,
+        TRANSLATION_TIMEOUT
+    )
+except ImportError:
+    # Fallback defaults if config not available
+    TRANSLATION_BATCH_SIZE = 50
+    TRANSLATION_RATE_LIMIT_DELAY = 0.5
+    TRANSLATION_MAX_TOKENS = 8000
+    TRANSLATION_TIMEOUT = 60
+
 
 @dataclass
 class VTTEntry:
@@ -167,9 +182,16 @@ class SubtitleTranslator:
         texts: List[str], 
         target_language: str,
         progress_callback: Optional[Callable] = None,
-        batch_size: int = 10
+        batch_size: Optional[int] = None  # Use config default if not specified
     ) -> List[str]:
         """Translate text batch using Claude API with rate limiting"""
+        # Use configuration defaults if not specified, adjust for model limitations
+        if batch_size is None:
+            if self.model == "claude-3-haiku-20240307":
+                batch_size = min(TRANSLATION_BATCH_SIZE, 25)  # Smaller batch for Haiku model
+            else:
+                batch_size = TRANSLATION_BATCH_SIZE
+            
         translated_texts = []
         total_batches = (len(texts) + batch_size - 1) // batch_size
         
@@ -184,10 +206,16 @@ class SubtitleTranslator:
                 # Prepare batch for translation
                 batch_text = '\n---SEPARATOR---\n'.join(batch)
                 
+                # Optimize API parameters for model limits - Claude Haiku has 4096 token limit
+                if self.model == "claude-3-haiku-20240307":
+                    max_tokens = min(4096, 2000 + len(batch) * 30)  # Conservative limit for Haiku
+                else:
+                    max_tokens = min(TRANSLATION_MAX_TOKENS, 4000 + len(batch) * 50)  # For other models
+                
                 # Call Claude API
                 response = self.client.messages.create(
                     model=self.model,
-                    max_tokens=4000,
+                    max_tokens=max_tokens,
                     temperature=0.1,  # Low temperature for consistent translation
                     messages=[{
                         "role": "user",
@@ -222,9 +250,11 @@ Subtitle text to translate:
                 
                 translated_texts.extend(translated_batch)
                 
-                # Rate limiting - wait between batches
+                # Dynamic rate limiting based on configuration and batch size
                 if batch_idx + batch_size < len(texts):
-                    time.sleep(1)  # 1 second delay between batches
+                    # Use configured delay with dynamic adjustment for larger batches
+                    delay = max(TRANSLATION_RATE_LIMIT_DELAY, TRANSLATION_RATE_LIMIT_DELAY * (1.0 - (batch_size / 200)))
+                    time.sleep(delay)
                     
             except Exception as e:
                 logging.error(f"Error translating batch {current_batch_num}: {e}")
@@ -304,7 +334,7 @@ def translate_subtitle_files(
         progress_callback: Optional callback for progress updates
         
     Returns:
-        List of paths to created translated VTT files
+        List of paths to created translated VTT files (includes existing ones)
     """
     if not api_key:
         logging.warning("No Claude API key provided. Skipping subtitle translation.")
@@ -324,10 +354,25 @@ def translate_subtitle_files(
         return []
     
     translated_files = []
+    language_code = translator._get_language_code(target_language)
     
     for vtt_file in vtt_files:
         # Skip already translated files
         if any(code in vtt_file.stem for code in ['.vi', '.es', '.fr', '.de', '.zh', '.ja', '.ko', '.trans']):
+            continue
+        
+        # Check if Vietnamese translation already exists
+        base_name = vtt_file.stem
+        if base_name.endswith('.en'):
+            base_name = base_name[:-3]  # Remove .en suffix
+        
+        expected_translated_path = video_folder / f"{base_name}.{language_code}.vtt"
+        
+        if expected_translated_path.exists():
+            if progress_callback:
+                progress_callback(f"✅ Translation already exists: {expected_translated_path.name}")
+            logging.info(f"Vietnamese translation already exists: {expected_translated_path.name}")
+            translated_files.append(expected_translated_path)
             continue
             
         logging.info(f"Translating subtitle file: {vtt_file.name}")

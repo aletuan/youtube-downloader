@@ -113,8 +113,8 @@ def handle_preview_click(
                 download_button.text = "Re-download"
                 download_button.bgcolor = ft.Colors.ORANGE_400
                 download_button.icon = ft.Icons.REFRESH
-                status_text.value = "⚠️ Video already exists. Click Re-download to download again."
-                status_text.color = ft.Colors.ORANGE_600
+                status_text.value = "✅ Video information loaded. Click Re-download if needed."
+                status_text.color = ft.Colors.GREEN_600
             else:
                 info_column.controls[4].value = "✅ Ready to download"
                 info_column.controls[4].color = ft.Colors.GREEN_600
@@ -230,6 +230,13 @@ def handle_download_click(
                         progress_bar.value = None  # Indeterminate progress for translation
                         status_text.value = f"🌐 Translating subtitles to Vietnamese..."
                         progress_info.value = "Translating subtitles using Claude AI..."
+                        
+                    elif progress.status == "translation_complete":
+                        # Translation completed - hide progress bar
+                        progress_bar.visible = False
+                        progress_info.visible = False
+                        status_text.value = f"✅ Translation completed! Vietnamese subtitles available."
+                        status_text.color = ft.Colors.GREEN_600
                         
                     elif progress.status == "error":
                         # Download error
