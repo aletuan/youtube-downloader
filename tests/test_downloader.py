@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 import unittest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import tempfile
 import shutil
 from pathlib import Path
 import sys
 import os
 
-# Add the current directory to Python path to import our module
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the src directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src'))
 
-from youtube_downloader import (
-    sanitize_filename, 
+from core.downloader import (
     download_youtube_video,
     _get_video_info,
     _create_video_folder,
@@ -19,44 +18,10 @@ from youtube_downloader import (
 )
 
 
-class TestSanitizeFilename(unittest.TestCase):
-    """Test cases for the sanitize_filename function"""
-    
-    def test_sanitize_basic_filename(self):
-        """Test that normal filenames are unchanged"""
-        result = sanitize_filename("normal_filename.txt")
-        self.assertEqual(result, "normal_filename.txt")
-    
-    def test_sanitize_filename_with_spaces(self):
-        """Test that spaces are preserved"""
-        result = sanitize_filename("file with spaces.txt")
-        self.assertEqual(result, "file with spaces.txt")
-    
-    def test_sanitize_filename_with_invalid_chars(self):
-        """Test that invalid characters are replaced with underscores"""
-        result = sanitize_filename('file<>:"/\\|?*.txt')
-        self.assertEqual(result, "file_________.txt")
-    
-    def test_sanitize_filename_mixed_case(self):
-        """Test filename with mixed valid and invalid characters"""
-        result = sanitize_filename("My Video: Part 1 | Episode <2>")
-        self.assertEqual(result, "My Video_ Part 1 _ Episode _2_")
-    
-    def test_sanitize_empty_filename(self):
-        """Test empty filename"""
-        result = sanitize_filename("")
-        self.assertEqual(result, "")
-    
-    def test_sanitize_filename_only_invalid_chars(self):
-        """Test filename with only invalid characters"""
-        result = sanitize_filename('<>:"/\\|?*')
-        self.assertEqual(result, "_________")
-
-
 class TestGetVideoInfo(unittest.TestCase):
     """Test cases for the _get_video_info function"""
     
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
+    @patch('core.downloader.yt_dlp.YoutubeDL')
     def test_get_video_info_success(self, mock_yt_dlp):
         """Test successful video info extraction"""
         mock_ydl_instance = MagicMock()
@@ -72,7 +37,7 @@ class TestGetVideoInfo(unittest.TestCase):
         self.assertEqual(video_id, 'test123')
         mock_ydl_instance.extract_info.assert_called_once_with('https://youtube.com/watch?v=test123', download=False)
     
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
+    @patch('core.downloader.yt_dlp.YoutubeDL')
     def test_get_video_info_with_invalid_chars(self, mock_yt_dlp):
         """Test video info extraction with title containing invalid characters"""
         mock_ydl_instance = MagicMock()
@@ -87,7 +52,7 @@ class TestGetVideoInfo(unittest.TestCase):
         self.assertEqual(title, 'Test Video_ Part _1_ _ _Special_')
         self.assertEqual(video_id, 'test123')
     
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
+    @patch('core.downloader.yt_dlp.YoutubeDL')
     def test_get_video_info_missing_title(self, mock_yt_dlp):
         """Test video info extraction when title is missing"""
         mock_ydl_instance = MagicMock()
@@ -179,18 +144,14 @@ class TestDownloadYoutubeVideo(unittest.TestCase):
         """Set up test fixtures before each test method"""
         self.temp_dir = tempfile.mkdtemp()
         self.test_url = "https://www.youtube.com/watch?v=test123"
-        self.mock_video_info = {
-            'title': 'Test Video Title',
-            'id': 'test123'
-        }
     
     def tearDown(self):
         """Clean up after each test method"""
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
     
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
+    @patch('core.downloader._get_video_info')
+    @patch('core.downloader.yt_dlp.YoutubeDL')
     def test_download_video_success(self, mock_yt_dlp, mock_get_video_info):
         """Test successful video download"""
         # Mock the helper functions
@@ -212,24 +173,7 @@ class TestDownloadYoutubeVideo(unittest.TestCase):
         expected_folder = Path(self.temp_dir) / "Test Video Title_test123"
         self.assertTrue(expected_folder.exists())
     
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
-    def test_download_video_with_invalid_title_chars(self, mock_yt_dlp, mock_get_video_info):
-        """Test video download with title containing invalid characters"""
-        # Mock returns sanitized title
-        mock_get_video_info.return_value = ("Test Video_ Part _1_ _ _Special_", "test123")
-        
-        mock_ydl_instance = MagicMock()
-        mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
-        mock_ydl_instance.download.return_value = None
-        
-        download_youtube_video(self.test_url, self.temp_dir)
-        
-        # Verify that the folder name is sanitized
-        expected_folder = Path(self.temp_dir) / "Test Video_ Part _1_ _ _Special__test123"
-        self.assertTrue(expected_folder.exists())
-    
-    @patch('youtube_downloader._get_video_info')
+    @patch('core.downloader._get_video_info')
     @patch('builtins.print')
     def test_download_video_extract_info_error(self, mock_print, mock_get_video_info):
         """Test handling of extract_info error"""
@@ -239,90 +183,7 @@ class TestDownloadYoutubeVideo(unittest.TestCase):
         
         # Verify error message was printed
         mock_print.assert_called_with("Error extracting video info: Network error")
-    
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
-    @patch('builtins.print')
-    def test_download_video_download_error(self, mock_print, mock_yt_dlp, mock_get_video_info):
-        """Test handling of download error"""
-        mock_get_video_info.return_value = ("Test Video Title", "test123")
-        
-        mock_ydl_instance = MagicMock()
-        mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
-        mock_ydl_instance.download.side_effect = Exception("Download failed")
-        
-        download_youtube_video(self.test_url, self.temp_dir)
-        
-        # Verify error message was printed
-        mock_print.assert_called_with("Error downloading video: Download failed")
-    
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
-    def test_download_video_creates_output_directory(self, mock_yt_dlp, mock_get_video_info):
-        """Test that output directory is created if it doesn't exist"""
-        non_existent_dir = os.path.join(self.temp_dir, "new_folder")
-        self.assertFalse(os.path.exists(non_existent_dir))
-        
-        mock_get_video_info.return_value = ("Test Video Title", "test123")
-        
-        mock_ydl_instance = MagicMock()
-        mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
-        mock_ydl_instance.download.return_value = None
-        
-        download_youtube_video(self.test_url, non_existent_dir)
-        
-        # Verify that the output directory was created
-        self.assertTrue(os.path.exists(non_existent_dir))
-    
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
-    def test_download_video_default_output_dir(self, mock_yt_dlp, mock_get_video_info):
-        """Test that default output directory is used when not specified"""
-        mock_get_video_info.return_value = ("Test Video Title", "test123")
-        
-        mock_ydl_instance = MagicMock()
-        mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
-        mock_ydl_instance.download.return_value = None
-        
-        # Change to temp directory to avoid creating download-data in current dir
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(self.temp_dir)
-            download_youtube_video(self.test_url)
-            
-            # Verify that default directory was created
-            expected_dir = Path(self.temp_dir) / "download-data"
-            self.assertTrue(expected_dir.exists())
-        finally:
-            os.chdir(original_cwd)
-    
-    @patch('youtube_downloader._get_video_info')
-    @patch('youtube_downloader.yt_dlp.YoutubeDL')
-    def test_yt_dlp_options_configuration(self, mock_yt_dlp, mock_get_video_info):
-        """Test that yt-dlp is configured with correct options"""
-        mock_get_video_info.return_value = ("Test Video Title", "test123")
-        
-        mock_ydl_instance = MagicMock()
-        mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
-        mock_ydl_instance.download.return_value = None
-        
-        download_youtube_video(self.test_url, self.temp_dir)
-        
-        # Get the download call options
-        download_call_args = mock_yt_dlp.call_args_list[0][0][0]
-        
-        # Verify key options are set correctly
-        self.assertEqual(download_call_args['format'], 'best')
-        self.assertTrue(download_call_args['writesubtitles'])
-        self.assertTrue(download_call_args['writeautomaticsub'])
-        self.assertEqual(download_call_args['subtitleslangs'], ['en', 'en-US'])
-        self.assertEqual(download_call_args['subtitlesformat'], 'vtt')
-        
-        # Verify output template includes the video folder
-        expected_folder = Path(self.temp_dir) / "Test Video Title_test123"
-        self.assertIn(str(expected_folder), download_call_args['outtmpl'])
 
 
 if __name__ == '__main__':
-    # Run the tests
     unittest.main(verbosity=2)

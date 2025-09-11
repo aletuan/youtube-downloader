@@ -1,58 +1,33 @@
 #!/usr/bin/env python3
-import yt_dlp
-from pathlib import Path
-import re
+"""
+YouTube Downloader - Compatibility wrapper for backward compatibility
 
-def sanitize_filename(filename):
-    """Remove invalid characters from filename"""
-    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+This file maintains the original interface while using the new modular structure.
+"""
 
-def _get_video_info(url):
-    """Extract video information without downloading"""
-    info_opts = {'quiet': True}
-    with yt_dlp.YoutubeDL(info_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-        video_title = sanitize_filename(info.get('title', 'Unknown'))
-        video_id = info.get('id', 'unknown')
-        return video_title, video_id
+import sys
+import os
 
-def _create_video_folder(output_dir, video_title, video_id):
-    """Create and return the folder path for a specific video"""
-    Path(output_dir).mkdir(exist_ok=True)
-    video_folder = Path(output_dir) / f"{video_title}_{video_id}"
-    video_folder.mkdir(exist_ok=True)
-    return video_folder
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-def _get_yt_dlp_options(video_folder):
-    """Configure yt-dlp download options"""
-    return {
-        'outtmpl': str(video_folder / '%(title)s.%(ext)s'),
-        'format': 'best',
-        'writesubtitles': True,
-        'writeautomaticsub': True,
-        'subtitleslangs': ['en', 'en-US'],
-        'subtitlesformat': 'vtt',
-    }
+# Import from new structure
+from core.downloader import (
+    download_youtube_video,
+    _get_video_info,
+    _create_video_folder,
+    _get_yt_dlp_options
+)
+from core.utils import sanitize_filename
 
-def download_youtube_video(url, output_dir="download-data"):
-    """Download a YouTube video with subtitles using yt-dlp"""
-    
-    try:
-        video_title, video_id = _get_video_info(url)
-    except Exception as e:
-        print(f"Error extracting video info: {e}")
-        return
-    
-    video_folder = _create_video_folder(output_dir, video_title, video_id)
-    ydl_opts = _get_yt_dlp_options(video_folder)
-    
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        print(f"Successfully downloaded video and subtitles to: {video_folder}")
-        print(f"Video: {video_title}")
-    except Exception as e:
-        print(f"Error downloading video: {e}")
+# Export the public API
+__all__ = [
+    'download_youtube_video',
+    'sanitize_filename',
+    '_get_video_info',
+    '_create_video_folder', 
+    '_get_yt_dlp_options'
+]
 
 if __name__ == "__main__":
     # Example usage
