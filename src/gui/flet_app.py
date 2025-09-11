@@ -37,15 +37,6 @@ def main(page: ft.Page):
     page.window_resizable = True
     page.padding = 20
     
-    # Keyboard shortcut handler (will be set after functions are defined)
-    def setup_keyboard_shortcuts():
-        def on_keyboard(e: ft.KeyboardEvent):
-            if e.ctrl and e.key == "o":
-                browse_folder(None)  # Trigger folder browse with Ctrl+O
-            elif e.ctrl and e.key == "Enter":
-                if not download_button.disabled:
-                    on_download_click(None)  # Trigger download with Ctrl+Enter
-        page.on_keyboard_event = on_keyboard
     
     # Create UI components
     title = ft.Text(
@@ -493,9 +484,6 @@ def main(page: ft.Page):
     
     # Add FilePicker to page overlay
     page.overlay.append(file_picker)
-    
-    # Setup keyboard shortcuts now that all functions are defined
-    setup_keyboard_shortcuts()
     
     # Add components to page
     page.add(
