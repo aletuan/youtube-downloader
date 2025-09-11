@@ -7,30 +7,25 @@ def sanitize_filename(filename):
     """Remove invalid characters from filename"""
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
 
-def download_youtube_video(url, output_dir="download-data"):
-    """Download a YouTube video with subtitles using yt-dlp"""
-    
-    # Create output directory if it doesn't exist
-    Path(output_dir).mkdir(exist_ok=True)
-    
-    # First, get video info to create folder name
+def _get_video_info(url):
+    """Extract video information without downloading"""
     info_opts = {'quiet': True}
-    try:
-        with yt_dlp.YoutubeDL(info_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            video_title = sanitize_filename(info.get('title', 'Unknown'))
-            video_id = info.get('id', 'unknown')
-            
-    except Exception as e:
-        print(f"Error extracting video info: {e}")
-        return
-    
-    # Create folder for this specific video
+    with yt_dlp.YoutubeDL(info_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        video_title = sanitize_filename(info.get('title', 'Unknown'))
+        video_id = info.get('id', 'unknown')
+        return video_title, video_id
+
+def _create_video_folder(output_dir, video_title, video_id):
+    """Create and return the folder path for a specific video"""
+    Path(output_dir).mkdir(exist_ok=True)
     video_folder = Path(output_dir) / f"{video_title}_{video_id}"
     video_folder.mkdir(exist_ok=True)
-    
-    # Configure yt-dlp options
-    ydl_opts = {
+    return video_folder
+
+def _get_yt_dlp_options(video_folder):
+    """Configure yt-dlp download options"""
+    return {
         'outtmpl': str(video_folder / '%(title)s.%(ext)s'),
         'format': 'best',
         'writesubtitles': True,
@@ -38,6 +33,18 @@ def download_youtube_video(url, output_dir="download-data"):
         'subtitleslangs': ['en', 'en-US'],
         'subtitlesformat': 'vtt',
     }
+
+def download_youtube_video(url, output_dir="download-data"):
+    """Download a YouTube video with subtitles using yt-dlp"""
+    
+    try:
+        video_title, video_id = _get_video_info(url)
+    except Exception as e:
+        print(f"Error extracting video info: {e}")
+        return
+    
+    video_folder = _create_video_folder(output_dir, video_title, video_id)
+    ydl_opts = _get_yt_dlp_options(video_folder)
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
