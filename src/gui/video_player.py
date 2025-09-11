@@ -40,8 +40,8 @@ class VideoPlayerScreen:
         # Video player component
         video_player = self._create_video_player()
         
-        # Control buttons
-        control_buttons = self._create_control_buttons()
+        # Control buttons - removed since ft.Video has built-in controls
+        # control_buttons = self._create_control_buttons()
         
         # Video info
         video_info = self._create_video_info()
@@ -69,12 +69,7 @@ class VideoPlayerScreen:
                 padding=10
             ),
             
-            ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-            
-            # Controls
-            control_buttons,
-            
-            ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+            ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
             
             # Video info
             video_info
@@ -174,37 +169,7 @@ class VideoPlayerScreen:
                 padding=20
             )
     
-    def _create_control_buttons(self) -> ft.Row:
-        """Create video control buttons"""
-        play_button = ft.ElevatedButton(
-            "Play",
-            icon=ft.Icons.PLAY_ARROW,
-            bgcolor=ft.Colors.GREEN_400,
-            color=ft.Colors.WHITE,
-            on_click=self._on_play_click
-        )
-        
-        pause_button = ft.ElevatedButton(
-            "Pause", 
-            icon=ft.Icons.PAUSE,
-            bgcolor=ft.Colors.ORANGE_400,
-            color=ft.Colors.WHITE,
-            on_click=self._on_pause_click
-        )
-        
-        stop_button = ft.ElevatedButton(
-            "Stop",
-            icon=ft.Icons.STOP,
-            bgcolor=ft.Colors.RED_400,
-            color=ft.Colors.WHITE,
-            on_click=self._on_stop_click
-        )
-        
-        return ft.Row([
-            play_button,
-            pause_button, 
-            stop_button
-        ], alignment=ft.MainAxisAlignment.CENTER, spacing=15)
+    # Control buttons removed - ft.Video component has built-in play/pause/stop controls
     
     def _create_video_info(self) -> ft.Container:
         """Create video information display for local downloaded video"""
@@ -279,17 +244,4 @@ class VideoPlayerScreen:
             # Fallback navigation
             self.page.go("/")
     
-    def _on_play_click(self, e):
-        """Handle play button click"""
-        # Video player controls are handled by the ft.Video component itself
-        pass
-    
-    def _on_pause_click(self, e):
-        """Handle pause button click"""
-        # Video player controls are handled by the ft.Video component itself
-        pass
-    
-    def _on_stop_click(self, e):
-        """Handle stop button click"""
-        # Video player controls are handled by the ft.Video component itself
-        pass
+    # Video control event handlers removed - ft.Video handles controls internally
