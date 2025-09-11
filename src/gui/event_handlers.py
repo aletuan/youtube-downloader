@@ -17,6 +17,9 @@ from gui.ui_factory import get_common_folders
 _active_download_thread = None
 _download_cancelled = False
 
+# Global variable to track downloaded video path for playback
+_last_downloaded_video_path = None
+
 
 def handle_folder_browse(page: ft.Page, output_dir_input: ft.TextField, status_text: ft.Text):
     """Handle folder browse button click"""
@@ -149,7 +152,8 @@ def handle_download_click(
     progress_bar: ft.ProgressBar,
     progress_info: ft.Text,
     download_button: ft.ElevatedButton,
-    preview_button: ft.ElevatedButton
+    preview_button: ft.ElevatedButton,
+    play_button: ft.ElevatedButton = None
 ):
     """Handle download button click"""
     url = url_input.value.strip() if url_input.value else ""
@@ -239,10 +243,22 @@ def handle_download_click(
             # Perform download with enhanced error handling and progress tracking
             download_youtube_video(url, output_dir, progress_callback=progress_callback)
             
-            # Get final video info for success message
+            # Get final video info for success message and video path tracking
             try:
                 video_title, video_id = _get_video_info(url)
                 final_folder = Path(output_dir) / f"{video_title}_{video_id}"
+                
+                # Find the downloaded video file
+                global _last_downloaded_video_path
+                _last_downloaded_video_path = None
+                if final_folder.exists():
+                    # Look for common video file extensions
+                    video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov']
+                    for file_path in final_folder.iterdir():
+                        if file_path.suffix.lower() in video_extensions:
+                            _last_downloaded_video_path = str(file_path)
+                            break
+                
                 if is_redownload:
                     status_text.value = f"✅ Re-download completed!\nSaved to: {final_folder}"
                 else:
@@ -253,6 +269,10 @@ def handle_download_click(
             
             status_text.color = ft.Colors.GREEN_600
             
+            # Show play button if video was successfully downloaded
+            if play_button and _last_downloaded_video_path:
+                play_button.visible = True
+                
         except Exception as error:
             # Enhanced error handling with more specific messages
             status_text.value = classify_error_type(str(error))
@@ -293,7 +313,8 @@ def handle_clear_click(
     progress_bar: ft.ProgressBar,
     progress_info: ft.Text,
     video_info_card: ft.Card,
-    download_button: ft.ElevatedButton
+    download_button: ft.ElevatedButton,
+    play_button: ft.ElevatedButton = None
 ):
     """Handle reset button click - stops downloads and resets UI"""
     global _download_cancelled, _active_download_thread
@@ -326,9 +347,34 @@ def handle_clear_click(
     download_button.bgcolor = ft.Colors.RED_400
     download_button.icon = ft.Icons.DOWNLOAD
     
-    # Reset cancellation flag
+    # Reset cancellation flag and video path
     _download_cancelled = False
+    global _last_downloaded_video_path
+    _last_downloaded_video_path = None
     
+    # Hide play button
+    if play_button:
+        play_button.visible = False
+    
+    page.update()
+
+
+def handle_play_click(page: ft.Page, video_title: str = "Video"):
+    """Handle play button click - navigate to video player screen"""
+    global _last_downloaded_video_path
+    
+    if not _last_downloaded_video_path or not Path(_last_downloaded_video_path).exists():
+        return
+    
+    # Import here to avoid circular imports
+    from gui.video_player import VideoPlayerScreen
+    
+    # Create video player screen
+    player_screen = VideoPlayerScreen(page)
+    player_view = player_screen.create_player_view(_last_downloaded_video_path, video_title)
+    
+    # Navigate to video player
+    page.views.append(player_view)
     page.update()
 
 

@@ -33,6 +33,7 @@ from gui.event_handlers import (
     handle_preview_click,
     handle_download_click,
     handle_clear_click,
+    handle_play_click,
     handle_theme_toggle,
     handle_file_picker_result
 )
@@ -59,7 +60,7 @@ def main(page: ft.Page):
     # Create UI components using factory functions
     title, subtitle = create_header_section()
     url_input, output_dir_input, browse_button, dir_row = create_input_section()
-    preview_button, download_button, clear_button, button_row = create_button_section()
+    preview_button, download_button, clear_button, play_button, button_row = create_button_section()
     status_text, progress_bar, progress_info = create_status_section()
     video_info_card = create_video_info_card()
     config_info = create_config_section()
@@ -85,14 +86,25 @@ def main(page: ft.Page):
     def on_download_click(_):
         handle_download_click(
             page, url_input, output_dir_input, status_text, 
-            progress_bar, progress_info, download_button, preview_button
+            progress_bar, progress_info, download_button, preview_button, play_button
         )
     
     def on_clear_click(_):
         handle_clear_click(
             page, url_input, output_dir_input, status_text, 
-            progress_bar, progress_info, video_info_card, download_button
+            progress_bar, progress_info, video_info_card, download_button, play_button
         )
+    
+    def on_play_click(_):
+        # Get video title from last download for better UX
+        video_title = "Downloaded Video"  # Default title
+        try:
+            if url_input.value:
+                from core.downloader import _get_video_info
+                video_title, _ = _get_video_info(url_input.value.strip())
+        except:
+            pass
+        handle_play_click(page, video_title)
     
     def on_theme_toggle(_):
         handle_theme_toggle(page)
@@ -102,6 +114,7 @@ def main(page: ft.Page):
     preview_button.on_click = on_preview_click
     download_button.on_click = on_download_click
     clear_button.on_click = on_clear_click
+    play_button.on_click = on_play_click
     theme_button.on_click = on_theme_toggle
     
     # Create main card with all components
@@ -126,26 +139,48 @@ def main(page: ft.Page):
     
     main_card = create_main_card(main_card_components)
     
+    # Add view routing handler for navigation
+    def on_route_change(route):
+        page.views.clear()
+        page.views.append(
+            ft.View(
+                "/",
+                [
+                    ft.Column(
+                        [
+                            ft.Row(
+                                [theme_button],
+                                alignment=ft.MainAxisAlignment.END
+                            ),
+                            main_card,
+                            ft.Container(expand=True),  # Spacer to push footer to bottom
+                            footer
+                        ],
+                        expand=True,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10
+                    )
+                ]
+            )
+        )
+        page.update()
+    
+    def on_view_pop(view):
+        page.views.pop()
+        top_view = page.views[-1]
+        page.go(top_view.route)
+    
+    page.on_route_change = on_route_change
+    page.on_view_pop = on_view_pop
+    
     # Add FilePicker to page overlay
     page.overlay.append(file_picker)
     
-    # Add components to page
-    page.add(
-        ft.Column(
-            [
-                ft.Row(
-                    [theme_button],
-                    alignment=ft.MainAxisAlignment.END
-                ),
-                main_card,
-                ft.Container(expand=True),  # Spacer to push footer to bottom
-                footer
-            ],
-            expand=True,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10
-        )
-    )
+    # Initialize main view
+    page.go("/")
+    
+    # Legacy approach removed in favor of view-based routing
+    # This enables proper screen navigation for video player functionality
 
 
 if __name__ == "__main__":

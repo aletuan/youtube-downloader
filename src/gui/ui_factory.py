@@ -99,13 +99,25 @@ def create_button_section() -> tuple:
         )
     )
     
+    # Play button (initially hidden)
+    play_button = ft.ElevatedButton(
+        "Play Video",
+        icon=ft.Icons.PLAY_CIRCLE,
+        bgcolor=ft.Colors.PURPLE_400,
+        color=ft.Colors.WHITE,
+        width=160,
+        height=45,
+        visible=False,  # Initially hidden
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+    )
+    
     button_row = ft.Row(
-        [preview_button, download_button, clear_button],
+        [preview_button, download_button, clear_button, play_button],
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=12
     )
     
-    return preview_button, download_button, clear_button, button_row
+    return preview_button, download_button, clear_button, play_button, button_row
 
 
 def create_status_section() -> tuple:

@@ -47,19 +47,19 @@ class TestUIFactory(unittest.TestCase):
         
         # Test output directory input
         self.assertEqual(output_dir_input.label, "Output Directory")
-        self.assertEqual(output_dir_input.width, 520)
+        self.assertEqual(output_dir_input.width, 560)
         
         # Test browse button
         self.assertEqual(browse_button.tooltip, "Browse for folder")
         
-        # Test dir row has correct components
-        self.assertEqual(len(dir_row.controls), 2)
-        self.assertEqual(dir_row.controls[0], output_dir_input)
-        self.assertEqual(dir_row.controls[1], browse_button)
+        # Test dir row has correct components (Container wrapping a Row)
+        self.assertEqual(len(dir_row.content.controls), 2)
+        self.assertEqual(dir_row.content.controls[0], output_dir_input)
+        self.assertEqual(dir_row.content.controls[1], browse_button)
     
     def test_create_button_section(self):
         """Test button section creation"""
-        preview_button, download_button, clear_button, button_row = create_button_section()
+        preview_button, download_button, clear_button, play_button, button_row = create_button_section()
         
         # Test preview button
         self.assertEqual(preview_button.text, "Preview Video")
@@ -74,8 +74,13 @@ class TestUIFactory(unittest.TestCase):
         self.assertEqual(clear_button.text, "Reset")
         self.assertEqual(clear_button.width, 120)
         
+        # Test play button
+        self.assertEqual(play_button.text, "Play Video")
+        self.assertEqual(play_button.width, 160)
+        self.assertFalse(play_button.visible)  # Should be initially hidden
+        
         # Test button row has correct components
-        self.assertEqual(len(button_row.controls), 3)
+        self.assertEqual(len(button_row.controls), 4)
     
     def test_create_status_section(self):
         """Test status section creation"""
