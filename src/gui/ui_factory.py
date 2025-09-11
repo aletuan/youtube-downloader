@@ -68,56 +68,45 @@ def create_input_section() -> tuple:
 def create_button_section() -> tuple:
     """Create action buttons (preview, download, clear)"""
     preview_button = ft.ElevatedButton(
-        "Preview Video",
+        "Preview",
         icon=ft.Icons.PREVIEW,
         bgcolor=ft.Colors.BLUE_400,
         color=ft.Colors.WHITE,
-        width=160,
+        width=140,
         height=45,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
     )
     
     download_button = ft.ElevatedButton(
-        "Download Video",
+        "Download",
         icon=ft.Icons.DOWNLOAD,
         bgcolor=ft.Colors.RED_400,
         color=ft.Colors.WHITE,
-        width=180,
+        width=140,
         height=45,
         disabled=True,  # Initially disabled until preview
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
     )
     
-    clear_button = ft.OutlinedButton(
-        "Reset",
-        icon=ft.Icons.REFRESH,
-        width=120,
-        height=45,
-        style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=8),
-            side=ft.BorderSide(1, ft.Colors.GREY_400)
-        )
-    )
-    
     # Play button (initially hidden)
     play_button = ft.ElevatedButton(
-        "Play Video",
+        "Play",
         icon=ft.Icons.PLAY_CIRCLE,
         bgcolor=ft.Colors.PURPLE_400,
         color=ft.Colors.WHITE,
-        width=160,
+        width=140,
         height=45,
         visible=False,  # Initially hidden
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
     )
     
     button_row = ft.Row(
-        [preview_button, download_button, clear_button, play_button],
+        [preview_button, download_button, play_button],
         alignment=ft.MainAxisAlignment.CENTER,
-        spacing=12
+        spacing=15
     )
     
-    return preview_button, download_button, clear_button, play_button, button_row
+    return preview_button, download_button, play_button, button_row
 
 
 def create_status_section() -> tuple:

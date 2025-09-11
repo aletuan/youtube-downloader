@@ -32,7 +32,6 @@ from gui.event_handlers import (
     handle_folder_browse,
     handle_preview_click,
     handle_download_click,
-    handle_clear_click,
     handle_play_click,
     handle_theme_toggle,
     handle_file_picker_result
@@ -60,7 +59,7 @@ def main(page: ft.Page):
     # Create UI components using factory functions
     title, subtitle = create_header_section()
     url_input, output_dir_input, browse_button, dir_row = create_input_section()
-    preview_button, download_button, clear_button, play_button, button_row = create_button_section()
+    preview_button, download_button, play_button, button_row = create_button_section()
     status_text, progress_bar, progress_info = create_status_section()
     video_info_card = create_video_info_card()
     config_info = create_config_section()
@@ -89,12 +88,6 @@ def main(page: ft.Page):
             progress_bar, progress_info, download_button, preview_button, play_button
         )
     
-    def on_clear_click(_):
-        handle_clear_click(
-            page, url_input, output_dir_input, status_text, 
-            progress_bar, progress_info, video_info_card, download_button, play_button
-        )
-    
     def on_play_click(_):
         # Get video title from last download for better UX
         video_title = "Downloaded Video"  # Default title
@@ -113,7 +106,6 @@ def main(page: ft.Page):
     browse_button.on_click = on_browse_folder
     preview_button.on_click = on_preview_click
     download_button.on_click = on_download_click
-    clear_button.on_click = on_clear_click
     play_button.on_click = on_play_click
     theme_button.on_click = on_theme_toggle
     

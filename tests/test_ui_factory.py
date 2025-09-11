@@ -59,28 +59,24 @@ class TestUIFactory(unittest.TestCase):
     
     def test_create_button_section(self):
         """Test button section creation"""
-        preview_button, download_button, clear_button, play_button, button_row = create_button_section()
+        preview_button, download_button, play_button, button_row = create_button_section()
         
         # Test preview button
-        self.assertEqual(preview_button.text, "Preview Video")
-        self.assertEqual(preview_button.width, 160)
+        self.assertEqual(preview_button.text, "Preview")
+        self.assertEqual(preview_button.width, 140)
         
         # Test download button
-        self.assertEqual(download_button.text, "Download Video")
-        self.assertEqual(download_button.width, 180)
+        self.assertEqual(download_button.text, "Download")
+        self.assertEqual(download_button.width, 140)
         self.assertTrue(download_button.disabled)  # Should be initially disabled
         
-        # Test clear button
-        self.assertEqual(clear_button.text, "Reset")
-        self.assertEqual(clear_button.width, 120)
-        
         # Test play button
-        self.assertEqual(play_button.text, "Play Video")
-        self.assertEqual(play_button.width, 160)
+        self.assertEqual(play_button.text, "Play")
+        self.assertEqual(play_button.width, 140)
         self.assertFalse(play_button.visible)  # Should be initially hidden
         
         # Test button row has correct components
-        self.assertEqual(len(button_row.controls), 4)
+        self.assertEqual(len(button_row.controls), 3)
     
     def test_create_status_section(self):
         """Test status section creation"""

@@ -110,7 +110,7 @@ def handle_preview_click(
             if exists:
                 info_column.controls[4].value = f"⚠️ Already downloaded! Files: {', '.join(existing_files)}"
                 info_column.controls[4].color = ft.Colors.ORANGE_600
-                download_button.text = "Re-download Video"
+                download_button.text = "Re-download"
                 download_button.bgcolor = ft.Colors.ORANGE_400
                 download_button.icon = ft.Icons.REFRESH
                 status_text.value = "⚠️ Video already exists. Click Re-download to download again."
@@ -118,7 +118,7 @@ def handle_preview_click(
             else:
                 info_column.controls[4].value = "✅ Ready to download"
                 info_column.controls[4].color = ft.Colors.GREEN_600
-                download_button.text = "Download Video"
+                download_button.text = "Download"
                 download_button.bgcolor = ft.Colors.RED_400
                 download_button.icon = ft.Icons.DOWNLOAD
                 status_text.value = "✅ Video information loaded. Ready to download!"
@@ -198,7 +198,7 @@ def handle_download_click(
                 return
                 
             # Check if this is a re-download
-            is_redownload = download_button.text == "Re-download Video"
+            is_redownload = download_button.text == "Re-download"
             action_text = "Re-downloading" if is_redownload else "Downloading"
             
             # Create progress callback for GUI updates
@@ -315,58 +315,7 @@ def handle_download_click(
     _active_download_thread.start()
 
 
-def handle_clear_click(
-    page: ft.Page,
-    url_input: ft.TextField,
-    output_dir_input: ft.TextField,
-    status_text: ft.Text,
-    progress_bar: ft.ProgressBar,
-    progress_info: ft.Text,
-    video_info_card: ft.Card,
-    download_button: ft.ElevatedButton,
-    play_button: ft.ElevatedButton = None
-):
-    """Handle reset button click - stops downloads and resets UI"""
-    global _download_cancelled, _active_download_thread
-    
-    # Cancel any ongoing download
-    if _active_download_thread and _active_download_thread.is_alive():
-        _download_cancelled = True
-        status_text.value = "⏹️ Stopping download..."
-        status_text.color = ft.Colors.ORANGE_600
-        page.update()
-        
-        # Wait briefly for download to stop gracefully
-        _active_download_thread.join(timeout=2.0)
-        _active_download_thread = None
-    
-    # Reset UI to initial state
-    url_input.value = ""
-    output_dir_input.value = DEFAULT_OUTPUT_DIR
-    status_text.value = "Ready to download"
-    status_text.color = ft.Colors.GREY_600
-    progress_bar.visible = False
-    progress_bar.value = None
-    progress_info.visible = False
-    progress_info.value = ""
-    video_info_card.visible = False
-    
-    # Reset download button to original state
-    download_button.disabled = True
-    download_button.text = "Download Video"
-    download_button.bgcolor = ft.Colors.RED_400
-    download_button.icon = ft.Icons.DOWNLOAD
-    
-    # Reset cancellation flag and video path
-    _download_cancelled = False
-    global _last_downloaded_video_path
-    _last_downloaded_video_path = None
-    
-    # Hide play button
-    if play_button:
-        play_button.visible = False
-    
-    page.update()
+# Reset/Clear functionality removed - simplified UI without reset button
 
 
 def handle_play_click(page: ft.Page, video_title: str = "Video"):
