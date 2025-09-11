@@ -4,22 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Python-based YouTube video downloader that uses yt-dlp to download videos with subtitles. Each video is organized into its own subfolder within a `download-data/` directory structure.
+This is a Python-based YouTube video downloader that uses yt-dlp to download videos with subtitles. Each video is organized into its own subfolder within a `download-data/` directory structure. The project follows a modular architecture with professional Python project structure.
 
 ## Core Architecture
 
-### Main Module: `youtube_downloader.py`
+### Modular Structure (src/ directory)
 
-- **`sanitize_filename(filename)`**: Utility function that removes invalid filesystem characters (`<>:"/\|?*`) and replaces them with underscores
-- **`download_youtube_video(url, output_dir="download-data")`**: Main download function that:
-  1. Extracts video metadata (title, ID) without downloading
-  2. Creates sanitized folder: `{video_title}_{video_id}/`
-  3. Downloads video and subtitles to that folder
-  4. Configures yt-dlp for subtitle download (English VTT format)
+- **`src/core/downloader.py`**: Core YouTube download functionality
+  - **`download_youtube_video(url, output_dir)`**: Main download function
+  - **`_get_video_info(url)`**: Extract video metadata without downloading
+  - **`_create_video_folder(output_dir, video_title, video_id)`**: Create video-specific folders
+  - **`_get_yt_dlp_options(video_folder)`**: Configure yt-dlp download options
+
+- **`src/core/utils.py`**: Utility functions
+  - **`sanitize_filename(filename)`**: Remove invalid filesystem characters
+
+- **`src/config/settings.py`**: Configuration constants
+  - Default output directory, subtitle languages, video format settings
+
+- **`src/gui/flet_app.py`**: GUI application using Flet framework
+  - Modern Material Design interface for future YouTube downloader GUI
+
+### Backward Compatibility
+
+- **`youtube_downloader.py`**: Compatibility wrapper maintaining original API
+  - Imports from new modular structure
+  - Preserves all original function signatures
+  - Maintains backward compatibility for existing users
 
 ### Key Dependencies
 
 - **yt-dlp**: Core video downloading functionality (version >= 2023.12.30)
+- **flet**: Modern Python GUI framework (version >= 0.21.0)
 - **pathlib**: Modern path handling
 - **re**: Filename sanitization
 
@@ -28,24 +44,29 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
 ### Testing
 
 ```bash
-# Run all tests with pytest (preferred)
-python -m pytest test_youtube_downloader.py -v
+# Run all tests with pytest (preferred - new modular structure)
+python -m pytest tests/ -v
 
-# Run tests with standard unittest
-python test_youtube_downloader.py
+# Run specific test modules
+python -m pytest tests/test_downloader.py -v
+python -m pytest tests/test_utils.py -v
+python -m pytest tests/test_flet_setup.py -v
 
 # Run single test class
-python -m pytest test_youtube_downloader.py::TestSanitizeFilename -v
+python -m pytest tests/test_downloader.py::TestGetVideoInfo -v
 
 # Run single test method
-python -m pytest test_youtube_downloader.py::TestDownloadYoutubeVideo::test_download_video_success -v
+python -m pytest tests/test_downloader.py::TestDownloadYoutubeVideo::test_download_video_success -v
+
+# Legacy compatibility wrapper testing
+python -c "from youtube_downloader import download_youtube_video; print('Import test passed')"
 ```
 
 ### Coverage Analysis
 
 ```bash
-# Run tests with coverage
-coverage run -m pytest test_youtube_downloader.py -v
+# Run tests with coverage (new structure)
+coverage run -m pytest tests/ -v
 
 # Generate coverage report
 coverage report --show-missing
@@ -54,11 +75,14 @@ coverage report --show-missing
 coverage html
 ```
 
-### Running the Script
+### Running Applications
 
 ```bash
-# Interactive mode
+# Run YouTube downloader (interactive mode)
 python youtube_downloader.py
+
+# Run Flet GUI demo
+python src/gui/flet_app.py
 
 # Direct usage (import in Python)
 from youtube_downloader import download_youtube_video
@@ -67,25 +91,57 @@ download_youtube_video("https://youtube.com/watch?v=...")
 
 ## Testing Architecture
 
-The test suite (`test_youtube_downloader.py`) uses unittest with mocking to avoid network calls:
+The modular test suite in `tests/` directory uses unittest with mocking to avoid network calls:
 
-- **TestSanitizeFilename**: 6 tests covering filename sanitization edge cases
-- **TestDownloadYoutubeVideo**: 7 tests using `unittest.mock` to mock yt-dlp interactions
+### Test Structure
+
+- **`tests/test_downloader.py`**: 10 tests covering core download functionality
+  - TestGetVideoInfo: Video metadata extraction
+  - TestCreateVideoFolder: Folder creation logic
+  - TestGetYtDlpOptions: Configuration testing
+  - TestDownloadYoutubeVideo: End-to-end download testing
+  
+- **`tests/test_utils.py`**: 6 tests covering utility functions
+  - TestSanitizeFilename: Filename sanitization edge cases
+  
+- **`tests/test_flet_setup.py`**: 2 tests covering GUI framework
+  - Flet import and component creation testing
+
+### Testing Strategy
+
 - **Mocking Strategy**: Uses `MagicMock` to simulate yt-dlp's `YoutubeDL` context manager
 - **Temp Directories**: All file system tests use temporary directories for isolation
-- **Coverage**: Achieves 93% coverage (missing only interactive input lines)
+- **Network Isolation**: No actual network calls during testing
+- **Total Coverage**: 18 tests across all modules with comprehensive coverage
 
 ## File Organization
 
-```
-├── youtube_downloader.py      # Main module with download logic
-├── test_youtube_downloader.py # Comprehensive test suite
-├── requirements.txt           # Python dependencies
-├── download-data/             # Created automatically, contains downloaded videos
+```text
+├── src/                           # Modern modular implementation
+│   ├── __init__.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── downloader.py         # Core download functionality
+│   │   └── utils.py              # Utility functions
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── settings.py           # Configuration constants
+│   └── gui/
+│       ├── __init__.py
+│       └── flet_app.py           # GUI application (Flet framework)
+├── tests/                         # Modern test suite
+│   ├── __init__.py
+│   ├── test_downloader.py        # Core functionality tests (10 tests)
+│   ├── test_utils.py             # Utility tests (6 tests)
+│   └── test_flet_setup.py        # GUI framework tests (2 tests)
+├── youtube_downloader.py         # Backward compatibility wrapper
+├── requirements.txt              # Python dependencies (yt-dlp, flet)
+├── CLAUDE.md                     # This documentation file
+├── download-data/                # Created automatically, contains downloaded videos
 │   └── {VideoTitle}_{VideoID}/
 │       ├── {VideoTitle}.mp4
 │       └── {VideoTitle}.en.vtt
-└── cookies/                   # Optional cookies for authentication
+└── cookies/                      # Optional cookies for authentication
 ```
 
 ## yt-dlp Configuration
@@ -108,12 +164,30 @@ When modifying the download function:
 4. Verify folder structure and file naming
 5. Check yt-dlp configuration options are passed correctly
 
-The mocking pattern follows:
+### Mocking Pattern
+
+The mocking pattern for the new modular structure:
 
 ```python
-@patch('youtube_downloader.yt_dlp.YoutubeDL')
+# For core functionality testing
+@patch('core.downloader.yt_dlp.YoutubeDL')
 def test_function(self, mock_yt_dlp):
     mock_ydl_instance = MagicMock()
     mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
     # Configure mock behavior...
+
+# For backward compatibility testing  
+@patch('youtube_downloader.yt_dlp.YoutubeDL')  # Still works via import chain
+def test_legacy_function(self, mock_yt_dlp):
+    # Test compatibility wrapper behavior...
 ```
+
+### Development Phases
+
+The project supports multiple development phases:
+
+1. **✅ Phase 1 Complete**: Professional project structure reorganization
+2. **Phase 2 (Future)**: YouTube Downloader GUI implementation using Flet
+3. **Phase 3 (Future)**: Advanced features and optimizations
+
+Current status: All core functionality preserved with modern, maintainable architecture.
