@@ -94,35 +94,85 @@ class VideoPlayerScreen:
         )
     
     def _create_video_player(self) -> ft.Video:
-        """Create the video player component"""
+        """Create the video player component that loads local downloaded video files"""
         if not self.video_path or not os.path.exists(self.video_path):
             # Show placeholder if video not found
+            error_message = "Video file not found" if self.video_path else "No video selected"
+            if self.video_path:
+                error_message += f"\nPath: {self.video_path}"
+            
             return ft.Container(
                 content=ft.Column([
-                    ft.Icon(ft.Icons.VIDEO_FILE, size=64, color=ft.Colors.GREY_400),
-                    ft.Text("Video not found", color=ft.Colors.GREY_600)
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                    ft.Icon(ft.Icons.ERROR_OUTLINE, size=64, color=ft.Colors.RED_400),
+                    ft.Text(error_message, color=ft.Colors.RED_600, text_align=ft.TextAlign.CENTER),
+                    ft.Text("Please ensure the video was downloaded successfully", 
+                           size=12, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
                 width=640,
                 height=360,
                 bgcolor=ft.Colors.GREY_100,
                 border_radius=8,
-                alignment=ft.alignment.center
+                alignment=ft.alignment.center,
+                padding=20
             )
         
-        # Create video player
-        video = ft.Video(
-            width=640,
-            height=360,
-            playlist=[ft.VideoMedia(self.video_path)],
-            playlist_mode=ft.PlaylistMode.NONE,
-            fill_color=ft.Colors.BLACK,
-            aspect_ratio=16/9,
-            autoplay=False,
-            show_controls=True,
-            playback_rate=1.0,
-        )
+        # Verify file is a video file
+        video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.m4v', '.flv']
+        file_extension = Path(self.video_path).suffix.lower()
         
-        return video
+        if file_extension not in video_extensions:
+            return ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.WARNING, size=64, color=ft.Colors.ORANGE_400),
+                    ft.Text(f"Unsupported video format: {file_extension}", 
+                           color=ft.Colors.ORANGE_600, text_align=ft.TextAlign.CENTER),
+                    ft.Text(f"Supported formats: {', '.join(video_extensions)}", 
+                           size=12, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
+                width=640,
+                height=360,
+                bgcolor=ft.Colors.GREY_100,
+                border_radius=8,
+                alignment=ft.alignment.center,
+                padding=20
+            )
+        
+        # Create video player with local file
+        try:
+            # Convert to absolute path for better compatibility
+            absolute_path = os.path.abspath(self.video_path)
+            
+            video = ft.Video(
+                width=640,
+                height=360,
+                playlist=[ft.VideoMedia(absolute_path)],
+                playlist_mode=ft.PlaylistMode.NONE,
+                fill_color=ft.Colors.BLACK,
+                aspect_ratio=16/9,
+                autoplay=True,  # Auto-play the downloaded video
+                show_controls=True,
+                playback_rate=1.0,
+            )
+            
+            return video
+            
+        except Exception as e:
+            # Handle any video player creation errors
+            return ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.ERROR, size=64, color=ft.Colors.RED_400),
+                    ft.Text(f"Error loading video: {str(e)}", 
+                           color=ft.Colors.RED_600, text_align=ft.TextAlign.CENTER),
+                    ft.Text(f"File: {self.video_path}", 
+                           size=11, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
+                width=640,
+                height=360,
+                bgcolor=ft.Colors.GREY_100,
+                border_radius=8,
+                alignment=ft.alignment.center,
+                padding=20
+            )
     
     def _create_control_buttons(self) -> ft.Row:
         """Create video control buttons"""
@@ -157,33 +207,54 @@ class VideoPlayerScreen:
         ], alignment=ft.MainAxisAlignment.CENTER, spacing=15)
     
     def _create_video_info(self) -> ft.Container:
-        """Create video information display"""
+        """Create video information display for local downloaded video"""
         file_size = "Unknown"
+        file_format = "Unknown"
+        file_status = "❌ File not found"
+        
         if self.video_path and os.path.exists(self.video_path):
             try:
+                # Get file size
                 size_bytes = os.path.getsize(self.video_path)
                 if size_bytes < 1024*1024:
                     file_size = f"{size_bytes/1024:.1f} KB"
                 elif size_bytes < 1024*1024*1024:
                     file_size = f"{size_bytes/(1024*1024):.1f} MB"
                 else:
-                    file_size = f"{size_bytes/(1024*1024*1024):.1f} GB"
-            except:
-                file_size = "Unknown"
+                    file_size = f"{size_bytes/(1024*1024*1024):.2f} GB"
+                
+                # Get file format
+                file_format = Path(self.video_path).suffix.upper().replace('.', '') or "Unknown"
+                file_status = "✅ Ready to play"
+                
+            except Exception as e:
+                file_size = f"Error: {str(e)}"
+                file_status = "❌ File access error"
+        
+        # Get folder name (video folder)
+        folder_name = "Unknown"
+        if self.video_path:
+            folder_name = Path(self.video_path).parent.name
         
         info_content = ft.Column([
-            ft.Text("Video Information", weight=ft.FontWeight.BOLD, size=14),
-            ft.Text(f"File: {Path(self.video_path).name if self.video_path else 'Unknown'}", size=12),
-            ft.Text(f"Size: {file_size}", size=12),
-            ft.Text(f"Path: {self.video_path or 'Unknown'}", size=11, color=ft.Colors.GREY_600),
-        ], spacing=5)
+            ft.Text("Downloaded Video Information", weight=ft.FontWeight.BOLD, size=14, color=ft.Colors.BLUE_700),
+            ft.Divider(height=1, color=ft.Colors.GREY_300),
+            ft.Text(f"📁 Folder: {folder_name}", size=12),
+            ft.Text(f"📄 File: {Path(self.video_path).name if self.video_path else 'Unknown'}", size=12),
+            ft.Text(f"📊 Size: {file_size}", size=12),
+            ft.Text(f"🎬 Format: {file_format}", size=12),
+            ft.Text(f"Status: {file_status}", size=12, 
+                   color=ft.Colors.GREEN_600 if "✅" in file_status else ft.Colors.RED_600),
+            ft.Text(f"Local Path: {self.video_path or 'Unknown'}", 
+                   size=10, color=ft.Colors.GREY_500, italic=True),
+        ], spacing=6)
         
         return ft.Container(
             content=info_content,
             padding=15,
-            bgcolor=ft.Colors.GREY_50,
+            bgcolor=ft.Colors.BLUE_50,
             border_radius=8,
-            border=ft.border.all(1, ft.Colors.GREY_300)
+            border=ft.border.all(1, ft.Colors.BLUE_200)
         )
     
     def _on_back_click(self, e):

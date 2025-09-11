@@ -253,11 +253,21 @@ def handle_download_click(
                 _last_downloaded_video_path = None
                 if final_folder.exists():
                     # Look for common video file extensions
-                    video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov']
+                    video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.m4v', '.flv']
+                    found_files = []
+                    
                     for file_path in final_folder.iterdir():
-                        if file_path.suffix.lower() in video_extensions:
-                            _last_downloaded_video_path = str(file_path)
-                            break
+                        if file_path.is_file():
+                            found_files.append(str(file_path))
+                            if file_path.suffix.lower() in video_extensions:
+                                _last_downloaded_video_path = str(file_path)
+                                print(f"[DEBUG] Video file found: {_last_downloaded_video_path}")
+                                break
+                    
+                    if not _last_downloaded_video_path and found_files:
+                        print(f"[DEBUG] No video file found. Files in folder: {found_files}")
+                    elif not found_files:
+                        print(f"[DEBUG] No files found in folder: {final_folder}")
                 
                 if is_redownload:
                     status_text.value = f"✅ Re-download completed!\nSaved to: {final_folder}"
@@ -363,8 +373,18 @@ def handle_play_click(page: ft.Page, video_title: str = "Video"):
     """Handle play button click - navigate to video player screen"""
     global _last_downloaded_video_path
     
-    if not _last_downloaded_video_path or not Path(_last_downloaded_video_path).exists():
+    print(f"[DEBUG] Play button clicked. Video path: {_last_downloaded_video_path}")
+    print(f"[DEBUG] Video title: {video_title}")
+    
+    if not _last_downloaded_video_path:
+        print("[DEBUG] No video path available")
         return
+        
+    if not Path(_last_downloaded_video_path).exists():
+        print(f"[DEBUG] Video file does not exist at path: {_last_downloaded_video_path}")
+        return
+    
+    print(f"[DEBUG] Loading video player for file: {_last_downloaded_video_path}")
     
     # Import here to avoid circular imports
     from gui.video_player import VideoPlayerScreen
@@ -376,6 +396,8 @@ def handle_play_click(page: ft.Page, video_title: str = "Video"):
     # Navigate to video player
     page.views.append(player_view)
     page.update()
+    
+    print("[DEBUG] Video player screen should now be displayed")
 
 
 def handle_theme_toggle(page: ft.Page):
