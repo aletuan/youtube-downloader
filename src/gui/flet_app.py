@@ -44,10 +44,17 @@ def main(page: ft.Page):
     # Configure page properties
     page.title = "YouTube Downloader"
     page.theme_mode = ft.ThemeMode.SYSTEM
-    page.window_width = 800
-    page.window_height = 600
-    page.window_resizable = True
     page.padding = 20
+    
+    # Configure window properties using window object
+    page.window.width = 1000
+    page.window.height = 800
+    page.window.min_width = 1000
+    page.window.min_height = 800
+    page.window.resizable = True
+    
+    # Force update to ensure window size is applied
+    page.update()
     
     # Create UI components using factory functions
     title, subtitle = create_header_section()
