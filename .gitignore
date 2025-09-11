@@ -22,3 +22,8 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Testing and coverage
+.coverage
+htmlcov/
+.pytest_cache/
