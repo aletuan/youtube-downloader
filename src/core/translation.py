@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Translation module for YouTube Downloader using Claude API"""
 
+import os
 import re
 import time
 import logging
@@ -8,6 +9,12 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Callable
 from dataclasses import dataclass
 import json
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 try:
     import anthropic
