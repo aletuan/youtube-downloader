@@ -327,4 +327,35 @@ The project supports multiple development phases:
    - [ ] Quality/format selection options
    - [ ] Playlist support
 
-Current status: Full-featured YouTube downloader with modern GUI, comprehensive duplicate detection, download progress tracking, integrated video player functionality, and automatic subtitle translation to Vietnamese using Claude API (feature complete, ready for production use).
+Current status: Full-featured YouTube downloader with modern GUI, comprehensive duplicate detection, download progress tracking, integrated video player functionality, automatic subtitle translation using Claude API, and environment variable configuration with .env file support. The project includes 89 comprehensive tests and is ready for production use.
+
+## Environment Configuration
+
+### .env File Support
+
+The project now includes comprehensive environment variable support through python-dotenv:
+
+1. **Automatic .env Loading**: Both `src/config/settings.py` and `src/core/translation.py` automatically load environment variables from a `.env` file in the project root.
+
+2. **Configuration Variables**:
+   - `ANTHROPIC_API_KEY`: Claude API key for subtitle translation
+   - `TRANSLATION_ENABLED`: Enable/disable translation feature (true/false)
+   - `TRANSLATION_TARGET_LANGUAGE`: Target language for translation (default: Vietnamese)
+   - `TRANSLATION_MODEL`: Claude model to use (default: claude-3-haiku-20240307)
+
+3. **Auth Conflict Resolution**: Using .env files resolves authentication conflicts between Claude Code OAuth tokens and the ANTHROPIC_API_KEY environment variable.
+
+4. **Fallback Defaults**: All environment variables have sensible defaults, so the application works even without a .env file.
+
+### Example .env File
+
+```env
+# YouTube Downloader Environment Variables
+# Claude API Configuration
+ANTHROPIC_API_KEY=sk-ant-api03-your-api-key-here
+
+# Translation Settings (optional overrides)
+TRANSLATION_ENABLED=true
+TRANSLATION_TARGET_LANGUAGE=Vietnamese
+TRANSLATION_MODEL=claude-3-haiku-20240307
+```
