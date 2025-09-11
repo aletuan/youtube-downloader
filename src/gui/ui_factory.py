@@ -39,7 +39,7 @@ def create_input_section() -> tuple:
     output_dir_input = ft.TextField(
         label="Output Directory",
         value=DEFAULT_OUTPUT_DIR,
-        width=520,
+        width=560,  # Reduced to accommodate button with spacing
         border_radius=8,
         prefix_icon=ft.Icons.FOLDER,
         hint_text="Select or enter output directory path",
@@ -52,10 +52,14 @@ def create_input_section() -> tuple:
         icon_size=20
     )
     
-    dir_row = ft.Row(
-        [output_dir_input, browse_button],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=8
+    dir_row = ft.Container(
+        content=ft.Row(
+            [output_dir_input, browse_button],
+            spacing=8,
+            alignment=ft.MainAxisAlignment.START  # Align to start for consistent left edge
+        ),
+        width=600,  # Same width as URL input
+        alignment=ft.alignment.center_left
     )
     
     return url_input, output_dir_input, browse_button, dir_row
@@ -198,8 +202,9 @@ def create_main_card(components: list) -> ft.Card:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=6
             ),
-            padding=30,
-            border_radius=12
+            padding=40,
+            border_radius=12,
+            height=650  # Make card taller
         ),
         elevation=4
     )
