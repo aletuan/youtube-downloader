@@ -79,7 +79,7 @@ class TestUIFactory(unittest.TestCase):
     
     def test_create_status_section(self):
         """Test status section creation"""
-        status_text, progress_bar = create_status_section()
+        status_text, progress_bar, progress_info = create_status_section()
         
         # Test status text
         self.assertEqual(status_text.value, "Ready to download")
@@ -88,6 +88,11 @@ class TestUIFactory(unittest.TestCase):
         # Test progress bar
         self.assertEqual(progress_bar.width, 600)
         self.assertFalse(progress_bar.visible)  # Should be initially hidden
+        
+        # Test progress info
+        self.assertEqual(progress_info.value, "")
+        self.assertEqual(progress_info.size, 12)
+        self.assertFalse(progress_info.visible)  # Should be initially hidden
     
     def test_create_video_info_card(self):
         """Test video info card creation"""

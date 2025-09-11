@@ -5,8 +5,10 @@ import yt_dlp
 import time
 import random
 from pathlib import Path
+from typing import Optional, Callable
 
 from core.utils import sanitize_filename
+from core.progress import ProgressTracker, DownloadProgress
 from config.settings import (
     DEFAULT_OUTPUT_DIR,
     SUBTITLE_LANGUAGES,
@@ -67,7 +69,7 @@ def _create_video_folder(output_dir, video_title, video_id):
     return video_folder
 
 
-def _get_yt_dlp_options(video_folder, retry_attempt=0):
+def _get_yt_dlp_options(video_folder, retry_attempt=0, progress_hook=None):
     """Configure yt-dlp download options with anti-bot detection measures"""
     
     # Rotate user agents to avoid detection
@@ -117,6 +119,10 @@ def _get_yt_dlp_options(video_folder, retry_attempt=0):
         'no_warnings': False,
     }
     
+    # Add progress hook if provided
+    if progress_hook:
+        options['progress_hooks'] = [progress_hook]
+    
     # On retry attempts, be more conservative with subtitles
     if retry_attempt > 0:
         options.update({
@@ -136,7 +142,7 @@ def _get_yt_dlp_options(video_folder, retry_attempt=0):
     return options
 
 
-def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR):
+def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR, progress_callback: Optional[Callable[[DownloadProgress], None]] = None):
     """Download a YouTube video with subtitles using yt-dlp with anti-bot measures"""
     
     try:
@@ -146,6 +152,11 @@ def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR):
         return
     
     video_folder = _create_video_folder(output_dir, video_title, video_id)
+    
+    # Initialize progress tracker if callback provided
+    progress_tracker = None
+    if progress_callback:
+        progress_tracker = ProgressTracker(progress_callback)
     
     # Retry with exponential backoff and different strategies
     max_retries = 3
@@ -159,7 +170,9 @@ def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR):
                 print(f"Waiting {delay:.1f} seconds before retry...")
                 time.sleep(delay)
             
-            ydl_opts = _get_yt_dlp_options(video_folder, retry_attempt=attempt)
+            # Get progress hook if available
+            progress_hook = progress_tracker.create_progress_hook() if progress_tracker else None
+            ydl_opts = _get_yt_dlp_options(video_folder, retry_attempt=attempt, progress_hook=progress_hook)
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
@@ -219,6 +232,9 @@ def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR):
 
 
 if __name__ == "__main__":
-    # Example usage
+    # Example usage with progress tracking
+    from core.progress import create_console_progress_callback
+    
     video_url = input("Enter YouTube URL: ")
-    download_youtube_video(video_url)
+    progress_callback = create_console_progress_callback()
+    download_youtube_video(video_url, progress_callback=progress_callback)

@@ -48,9 +48,9 @@ def main(page: ft.Page):
     
     # Configure window properties using window object
     page.window.width = 1000
-    page.window.height = 800
+    page.window.height = 900
     page.window.min_width = 1000
-    page.window.min_height = 800
+    page.window.min_height = 900
     page.window.resizable = True
     
     # Force update to ensure window size is applied
@@ -60,7 +60,7 @@ def main(page: ft.Page):
     title, subtitle = create_header_section()
     url_input, output_dir_input, browse_button, dir_row = create_input_section()
     preview_button, download_button, clear_button, button_row = create_button_section()
-    status_text, progress_bar = create_status_section()
+    status_text, progress_bar, progress_info = create_status_section()
     video_info_card = create_video_info_card()
     config_info = create_config_section()
     theme_button = create_theme_button()
@@ -85,13 +85,13 @@ def main(page: ft.Page):
     def on_download_click(_):
         handle_download_click(
             page, url_input, output_dir_input, status_text, 
-            progress_bar, download_button, preview_button
+            progress_bar, progress_info, download_button, preview_button
         )
     
     def on_clear_click(_):
         handle_clear_click(
             page, url_input, output_dir_input, status_text, 
-            progress_bar, video_info_card, download_button
+            progress_bar, progress_info, video_info_card, download_button
         )
     
     def on_theme_toggle(_):
@@ -119,6 +119,7 @@ def main(page: ft.Page):
         ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
         video_info_card,
         progress_bar,
+        progress_info,
         status_text,
     ]
     

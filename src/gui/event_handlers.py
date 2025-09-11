@@ -9,6 +9,7 @@ from pathlib import Path
 
 from core.downloader import download_youtube_video, _get_video_info, _check_video_exists
 from core.validation import validate_youtube_url, validate_output_directory, classify_error_type
+from core.progress import DownloadProgress
 from config.settings import DEFAULT_OUTPUT_DIR
 from gui.ui_factory import get_common_folders
 
@@ -142,6 +143,7 @@ def handle_download_click(
     output_dir_input: ft.TextField,
     status_text: ft.Text,
     progress_bar: ft.ProgressBar,
+    progress_info: ft.Text,
     download_button: ft.ElevatedButton,
     preview_button: ft.ElevatedButton
 ):
@@ -172,6 +174,7 @@ def handle_download_click(
     download_button.disabled = True
     preview_button.disabled = True
     progress_bar.visible = True
+    progress_info.visible = True
     status_text.value = "🔄 Starting download..."
     status_text.color = ft.Colors.BLUE_600
     page.update()
@@ -183,12 +186,43 @@ def handle_download_click(
             is_redownload = download_button.text == "Re-download Video"
             action_text = "Re-downloading" if is_redownload else "Downloading"
             
+            # Create progress callback for GUI updates
+            def progress_callback(progress: DownloadProgress):
+                """Update GUI with download progress"""
+                try:
+                    if progress.status == "downloading":
+                        # Update progress bar
+                        progress_bar.value = progress.percent / 100.0 if progress.percent else None
+                        
+                        # Update status text
+                        status_text.value = f"🔄 {action_text} - {progress.percent_str}"
+                        
+                        # Update progress info with detailed information
+                        progress_info.value = f"{progress.size_str} | {progress.speed_str} | ETA: {progress.eta_str}"
+                        
+                    elif progress.status == "finished":
+                        # Download completed
+                        progress_bar.value = 1.0
+                        status_text.value = f"✅ {action_text} completed!"
+                        progress_info.value = f"Completed in {progress.elapsed:.1f}s"
+                        
+                    elif progress.status == "error":
+                        # Download error
+                        status_text.value = f"❌ {action_text} failed"
+                        progress_info.value = f"Failed after {progress.elapsed:.1f}s"
+                    
+                    # Update the UI
+                    page.update()
+                except Exception:
+                    # Don't let UI update errors break the download
+                    pass
+            
             # Update status with more details
             status_text.value = f"🔄 {action_text} video to {output_dir}..."
             page.update()
             
-            # Perform download with enhanced error handling
-            download_youtube_video(url, output_dir)
+            # Perform download with enhanced error handling and progress tracking
+            download_youtube_video(url, output_dir, progress_callback=progress_callback)
             
             # Get final video info for success message
             try:
@@ -213,7 +247,9 @@ def handle_download_click(
             # Re-enable buttons and hide progress
             download_button.disabled = False
             preview_button.disabled = False
-            progress_bar.visible = False
+            # Keep progress bar visible for a moment to show completion
+            # progress_bar.visible = False  # Let user see the completed progress
+            progress_info.visible = False
             page.update()
     
     # Start download thread
@@ -226,6 +262,7 @@ def handle_clear_click(
     output_dir_input: ft.TextField,
     status_text: ft.Text,
     progress_bar: ft.ProgressBar,
+    progress_info: ft.Text,
     video_info_card: ft.Card,
     download_button: ft.ElevatedButton
 ):
@@ -235,6 +272,9 @@ def handle_clear_click(
     status_text.value = "Ready to download"
     status_text.color = ft.Colors.GREY_700
     progress_bar.visible = False
+    progress_bar.value = None
+    progress_info.visible = False
+    progress_info.value = ""
     video_info_card.visible = False
     
     # Reset download button to original state

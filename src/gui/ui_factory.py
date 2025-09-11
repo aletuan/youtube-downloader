@@ -109,7 +109,15 @@ def create_status_section() -> tuple:
         color=ft.Colors.RED_400
     )
     
-    return status_text, progress_bar
+    # Additional progress information
+    progress_info = ft.Text(
+        "",
+        size=12,
+        color=ft.Colors.GREY_600,
+        visible=False
+    )
+    
+    return status_text, progress_bar, progress_info
 
 
 def create_video_info_card() -> ft.Card:
