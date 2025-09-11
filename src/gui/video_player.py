@@ -43,8 +43,8 @@ class VideoPlayerScreen:
         # Control buttons - removed since ft.Video has built-in controls
         # control_buttons = self._create_control_buttons()
         
-        # Video info
-        video_info = self._create_video_info()
+        # Video info - removed for simplified UI
+        # video_info = self._create_video_info()
         
         # Main content
         content = ft.Column([
@@ -67,14 +67,9 @@ class VideoPlayerScreen:
                 bgcolor=ft.Colors.BLACK12,
                 border_radius=12,
                 padding=10
-            ),
+            )
             
-            ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-            
-            # Video info
-            video_info
-            
-        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=15)
         
         return ft.View(
             route="/player",
@@ -169,58 +164,8 @@ class VideoPlayerScreen:
                 padding=20
             )
     
-    # Control buttons removed - ft.Video component has built-in play/pause/stop controls
-    
-    def _create_video_info(self) -> ft.Container:
-        """Create video information display for local downloaded video"""
-        file_size = "Unknown"
-        file_format = "Unknown"
-        file_status = "❌ File not found"
-        
-        if self.video_path and os.path.exists(self.video_path):
-            try:
-                # Get file size
-                size_bytes = os.path.getsize(self.video_path)
-                if size_bytes < 1024*1024:
-                    file_size = f"{size_bytes/1024:.1f} KB"
-                elif size_bytes < 1024*1024*1024:
-                    file_size = f"{size_bytes/(1024*1024):.1f} MB"
-                else:
-                    file_size = f"{size_bytes/(1024*1024*1024):.2f} GB"
-                
-                # Get file format
-                file_format = Path(self.video_path).suffix.upper().replace('.', '') or "Unknown"
-                file_status = "✅ Ready to play"
-                
-            except Exception as e:
-                file_size = f"Error: {str(e)}"
-                file_status = "❌ File access error"
-        
-        # Get folder name (video folder)
-        folder_name = "Unknown"
-        if self.video_path:
-            folder_name = Path(self.video_path).parent.name
-        
-        info_content = ft.Column([
-            ft.Text("Downloaded Video Information", weight=ft.FontWeight.BOLD, size=14, color=ft.Colors.BLUE_700),
-            ft.Divider(height=1, color=ft.Colors.GREY_300),
-            ft.Text(f"📁 Folder: {folder_name}", size=12),
-            ft.Text(f"📄 File: {Path(self.video_path).name if self.video_path else 'Unknown'}", size=12),
-            ft.Text(f"📊 Size: {file_size}", size=12),
-            ft.Text(f"🎬 Format: {file_format}", size=12),
-            ft.Text(f"Status: {file_status}", size=12, 
-                   color=ft.Colors.GREEN_600 if "✅" in file_status else ft.Colors.RED_600),
-            ft.Text(f"Local Path: {self.video_path or 'Unknown'}", 
-                   size=10, color=ft.Colors.GREY_500, italic=True),
-        ], spacing=6)
-        
-        return ft.Container(
-            content=info_content,
-            padding=15,
-            bgcolor=ft.Colors.BLUE_50,
-            border_radius=8,
-            border=ft.border.all(1, ft.Colors.BLUE_200)
-        )
+    # Control buttons and video info removed for simplified UI
+    # Video player now shows only: Header + Video Player
     
     def _on_back_click(self, e):
         """Handle back button click - navigate back to main downloader screen"""
