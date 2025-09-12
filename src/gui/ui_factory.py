@@ -127,7 +127,7 @@ def create_button_section() -> tuple:
 def create_status_section() -> tuple:
     """Create status display and progress components"""
     status_text = ft.Text(
-        "Ready to download",
+        "Click on Preview to confirm",
         size=14,
         color=ft.Colors.GREY_600,
         text_align=ft.TextAlign.CENTER

@@ -109,12 +109,29 @@ def handle_preview_click(
             
             # Update download status based on existence
             if exists:
-                info_column.controls[4].value = f"⚠️ Already downloaded! Files: {', '.join(existing_files)}"
-                info_column.controls[4].color = ft.Colors.ORANGE_600
-                download_button.text = "Re-download"
-                download_button.bgcolor = ft.Colors.ORANGE_400
-                download_button.icon = ft.Icons.REFRESH
-                status_text.value = "✅ Video information loaded. Click Re-download if needed."
+                # Get ALL files in the folder (not just video files) to check for subtitles
+                all_files = [f.name for f in video_folder.iterdir() if f.is_file()]
+                
+                # Check for subtitle availability
+                vietnamese_subtitles = [f for f in all_files if f.endswith('.vi.vtt')]
+                english_subtitles = [f for f in all_files if f.endswith('.en.vtt')]
+                
+                subtitle_status = ""
+                if vietnamese_subtitles:
+                    if any('.vi.vtt' in f for f in vietnamese_subtitles):
+                        subtitle_status = " | 🇻🇳 Vietnamese subtitles (native)"
+                    else:
+                        subtitle_status = " | 🇻🇳 Vietnamese subtitles (translated)"
+                elif english_subtitles:
+                    subtitle_status = " | 🇺🇸 English subtitles"
+                
+                info_column.controls[4].value = f"✅ Ready to play{subtitle_status}"
+                info_column.controls[4].color = ft.Colors.GREEN_600
+                
+                # Hide download button for existing videos
+                download_button.visible = False
+                
+                status_text.value = "Click Play to watch."
                 status_text.color = ft.Colors.GREEN_600
                 
                 # Set up Play button for existing video
@@ -130,27 +147,31 @@ def handle_preview_click(
                         print(f"[DEBUG] Found existing video for playback: {_last_downloaded_video_path}")
                         break
                 
-                # Show Play button if video file was found
+                # Show Play button immediately if video file was found
                 if play_button and _last_downloaded_video_path:
                     play_button.visible = True
-                    print(f"[DEBUG] Play button enabled for existing video")
+                    print(f"[DEBUG] Play button enabled for existing video with path: {_last_downloaded_video_path}")
             else:
-                info_column.controls[4].value = "✅ Ready to download"
-                info_column.controls[4].color = ft.Colors.GREEN_600
+                info_column.controls[4].value = "✅ Click Download to proceed"
+                info_column.controls[4].color = ft.Colors.BLUE_600
                 download_button.text = "Download"
                 download_button.bgcolor = ft.Colors.RED_400
                 download_button.icon = ft.Icons.DOWNLOAD
-                status_text.value = "✅ Video information loaded. Ready to download!"
-                status_text.color = ft.Colors.GREEN_600
+                download_button.visible = True
+                status_text.value = "✅ Video information loaded. Click Download to proceed."
+                status_text.color = ft.Colors.BLUE_600
                 
                 # Hide Play button for new downloads
                 if play_button:
                     play_button.visible = False
                     print(f"[DEBUG] Play button hidden for new download")
             
-            # Show video info card and enable download
+            # Show video info card 
             video_info_card.visible = True
-            download_button.disabled = False
+            
+            # Only enable download button for new videos (not existing ones)
+            if not exists:
+                download_button.disabled = False
             
         except Exception as error:
             # Error handling
@@ -202,6 +223,20 @@ def handle_download_click(
         page.update()
         return
     
+    # Check if video already exists - don't allow download if it does
+    try:
+        video_title, video_id = _get_video_info(url)
+        exists, video_folder, existing_files = _check_video_exists(output_dir, video_title, video_id)
+        
+        if exists:
+            status_text.value = "⚠️ Video already exists! Use Preview to play existing video."
+            status_text.color = ft.Colors.ORANGE_600
+            page.update()
+            return
+    except Exception:
+        # If we can't check existence, proceed with download
+        pass
+    
     # Disable buttons and show progress
     download_button.disabled = True
     preview_button.disabled = True
@@ -221,9 +256,8 @@ def handle_download_click(
             if _download_cancelled:
                 return
                 
-            # Check if this is a re-download
-            is_redownload = download_button.text == "Re-download"
-            action_text = "Re-downloading" if is_redownload else "Downloading"
+            # Always downloading (no re-download functionality)
+            action_text = "Downloading"
             
             # Create progress callback for GUI updates
             def progress_callback(progress: DownloadProgress):
@@ -306,13 +340,9 @@ def handle_download_click(
                     elif not found_files:
                         print(f"[DEBUG] No files found in folder: {final_folder}")
                 
-                if is_redownload:
-                    status_text.value = f"✅ Re-download completed!"
-                else:
-                    status_text.value = f"✅ Download completed!"
+                status_text.value = f"✅ Download completed!"
             except:
-                action_text = "Re-download" if is_redownload else "Download"
-                status_text.value = f"✅ {action_text} completed!"
+                status_text.value = f"✅ Download completed!"
             
             status_text.color = ft.Colors.GREEN_600
             
@@ -415,6 +445,6 @@ def handle_file_picker_result(
             status_text.value = f"❌ Invalid directory selected: {e.path}"
             status_text.color = ft.Colors.RED_600
     else:
-        status_text.value = "Ready to download"
+        status_text.value = "Click on Preview to confirm"
         status_text.color = ft.Colors.GREY_700
     page.update()
