@@ -152,7 +152,7 @@ def handle_preview_click(
                     play_button.visible = True
                     print(f"[DEBUG] Play button enabled for existing video with path: {_last_downloaded_video_path}")
             else:
-                info_column.controls[4].value = "✅ Click Download to proceed"
+                info_column.controls[4].value = ""
                 info_column.controls[4].color = ft.Colors.BLUE_600
                 download_button.text = "Download"
                 download_button.bgcolor = ft.Colors.RED_400
