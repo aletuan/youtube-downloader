@@ -1,34 +1,35 @@
 # YouTube Downloader
 
-A professional Python-based YouTube video downloader with automatic subtitle translation, featuring a modern GUI built with Flet and powered by yt-dlp.
+A professional Python-based YouTube video downloader with automatic subtitle translation, featuring a modern GUI built with Flet and powered by `yt-dlp`.
 
 ## Features
 
-- **High-Quality Video Downloads**: Download YouTube videos in the best available quality
-- **Automatic Subtitle Translation**: Translate English subtitles to Vietnamese (or other languages) using Claude API
-- **Modern GUI Interface**: Clean, Material Design interface built with Flet framework
-- **Video Preview**: Preview video information before downloading
-- **Duplicate Detection**: Smart detection of existing downloads with re-download options
-- **Progress Tracking**: Real-time download progress with visual feedback
-- **Integrated Video Player**: Built-in video player to watch downloaded content
-- **Professional Structure**: Modular, testable codebase with comprehensive test coverage
+- High-Quality Video Downloads: Download YouTube videos in the best available quality
+- Automatic Subtitle Translation: Translate English subtitles to Vietnamese (or other languages) using Claude API
+- Video Preview: Preview video information before downloading
+- Duplicate Detection: Smart detection of existing downloads with re-download options
+- Progress Tracking: Real-time download progress with visual feedback
+- Integrated Video Player: Built-in video player to watch downloaded content
 
 ## Quick Start
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd youtube-downloader
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
@@ -37,16 +38,19 @@ cp .env.example .env
 ### Usage
 
 #### GUI Application (Recommended)
+
 ```bash
 python src/gui/flet_app.py
 ```
 
 #### Command Line
+
 ```bash
 python youtube_downloader.py
 ```
 
 #### Python Import
+
 ```python
 from youtube_downloader import download_youtube_video
 download_youtube_video("https://youtube.com/watch?v=...")
@@ -150,26 +154,26 @@ coverage report --show-missing
 
 The project includes comprehensive test coverage with 89 tests:
 
-- **Core functionality**: 15 tests
-- **Translation module**: 16 tests  
-- **GUI framework**: 11 tests
-- **Progress tracking**: 11 tests
-- **UI factory**: 10 tests
-- **Utility functions**: 6 tests
-- **Validation**: 20 tests
+- Core functionality: 15 tests
+- Translation module: 16 tests  
+- GUI framework: 11 tests
+- Progress tracking: 11 tests
+- UI factory: 10 tests
+- Utility functions: 6 tests
+- Validation: 20 tests
 
 ### Dependencies
 
-- **yt-dlp**: Core video downloading (>= 2023.12.30)
-- **flet**: Modern GUI framework (>= 0.21.0)
-- **anthropic**: Claude API client for translation (>= 0.7.0)
-- **python-dotenv**: Environment variable management (>= 1.0.0)
+- yt-dlp: Core video downloading (>= 2023.12.30)
+- flet: Modern GUI framework (>= 0.21.0)
+- anthropic: Claude API client for translation (>= 0.7.0)
+- python-dotenv: Environment variable management (>= 1.0.0)
 
 ## File Organization
 
 Downloaded videos are organized as follows:
 
-```
+```txt
 download-data/
 └── {VideoTitle}_{VideoID}/
     ├── {VideoTitle}.mp4        # Video file
@@ -182,21 +186,22 @@ download-data/
 Translation supports multiple target languages:
 
 - Vietnamese (vi) - Default
-- Spanish (es)
-- French (fr)
-- German (de)
-- Chinese (zh)
-- Japanese (ja)
-- Korean (ko)
+- TODO:
+  - Spanish (es)
+  - French (fr)
+  - German (de)
+  - Chinese (zh)
+  - Japanese (ja)
+  - Korean (ko)
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Translation not working**: Ensure `ANTHROPIC_API_KEY` is set in your `.env` file
-2. **Video download fails**: Check your internet connection and YouTube URL validity
-3. **GUI not starting**: Ensure Flet is properly installed: `pip install flet>=0.21.0`
-4. **Tests failing**: Run `pip install -r requirements.txt` to ensure all dependencies are installed
+1. Translation not working: Ensure `ANTHROPIC_API_KEY` is set in your `.env` file
+2. Video download fails: Check your internet connection and YouTube URL validity
+3. GUI not starting: Ensure Flet is properly installed: `pip install flet>=0.21.0`
+4. Tests failing: Run `pip install -r requirements.txt` to ensure all dependencies are installed
 
 ### Error Handling
 
