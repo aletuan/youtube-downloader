@@ -85,7 +85,7 @@ class TestUIFactory(unittest.TestCase):
         status_text, progress_bar, progress_info = create_status_section()
         
         # Test status text
-        self.assertEqual(status_text.value, "Ready to download")
+        self.assertEqual(status_text.value, "Click on Preview to confirm")
         self.assertEqual(status_text.size, 14)
         
         # Test progress bar

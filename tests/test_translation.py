@@ -296,9 +296,11 @@ Test subtitle content.
         shutil.rmtree(self.temp_dir)
     
     def test_translate_subtitle_files_no_api_key(self):
-        """Test translate_subtitle_files without API key"""
+        """Test translate_subtitle_files without API key - should find native Vietnamese subtitles"""
         result = translate_subtitle_files(self.video_folder)
-        self.assertEqual(result, [])
+        # Should find the native Vietnamese subtitle file (Test Video.vi.vtt)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].name == "Test Video.vi.vtt")
     
     def test_translate_subtitle_files_no_vtt_files(self):
         """Test translate_subtitle_files with no VTT files"""
@@ -310,16 +312,11 @@ Test subtitle content.
     
     @patch('core.translation.SubtitleTranslator')
     def test_translate_subtitle_files_success(self, mock_translator_class):
-        """Test successful subtitle files translation"""
+        """Test successful subtitle files translation - should find native Vietnamese subtitles"""
         # Setup mock translator
         mock_translator = MagicMock()
         mock_translator_class.return_value = mock_translator
         mock_translator.client = MagicMock()  # Simulate initialized client
-        
-        # Mock translation results
-        translated_path1 = self.video_folder / "Test Video.vi.vtt"
-        translated_path2 = self.video_folder / "Test Video2.vi.vtt"
-        mock_translator.translate_vtt_file.side_effect = [translated_path1, translated_path2]
         
         result = translate_subtitle_files(
             self.video_folder,
@@ -327,9 +324,11 @@ Test subtitle content.
             api_key="test-key"
         )
         
-        # Should have translated 2 files (excluding the already translated .vi.vtt)
-        self.assertEqual(len(result), 2)
-        self.assertEqual(mock_translator.translate_vtt_file.call_count, 2)
+        # Should find the native Vietnamese subtitle file (Test Video.vi.vtt) instead of translating
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].name == "Test Video.vi.vtt")
+        # No translation should occur since native Vietnamese subtitles exist
+        self.assertEqual(mock_translator.translate_vtt_file.call_count, 0)
         
         # Verify translator was initialized correctly
         mock_translator_class.assert_called_once_with(api_key="test-key")

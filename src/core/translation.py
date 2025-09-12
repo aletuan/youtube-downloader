@@ -343,16 +343,6 @@ def translate_subtitle_files(
     Returns:
         List of paths to created translated VTT files (includes existing ones)
     """
-    if not api_key:
-        logging.warning("No Claude API key provided. Skipping subtitle translation.")
-        return []
-    
-    translator = SubtitleTranslator(api_key=api_key)
-    
-    if not translator.client:
-        logging.warning("Failed to initialize translator. Skipping subtitle translation.")
-        return []
-    
     # Find VTT files in folder
     vtt_files = list(video_folder.glob("*.vtt"))
     
@@ -361,14 +351,19 @@ def translate_subtitle_files(
         return []
     
     translated_files = []
-    language_code = translator._get_language_code(target_language)
+    language_code = SubtitleTranslator(api_key=api_key)._get_language_code(target_language)
     
+    # First, check for native Vietnamese subtitles downloaded directly from YouTube
+    native_vietnamese_files = [f for f in vtt_files if f.stem.endswith('.vi')]
+    
+    if native_vietnamese_files:
+        if progress_callback:
+            progress_callback(f"✅ Found native Vietnamese subtitles: {', '.join([f.name for f in native_vietnamese_files])}")
+        logging.info(f"Using native Vietnamese subtitles from YouTube: {', '.join([f.name for f in native_vietnamese_files])}")
+        return native_vietnamese_files
+    
+    # If no native Vietnamese subtitles, check for existing translated Vietnamese files
     for vtt_file in vtt_files:
-        # Skip already translated files
-        if any(code in vtt_file.stem for code in ['.vi', '.es', '.fr', '.de', '.zh', '.ja', '.ko', '.trans']):
-            continue
-        
-        # Check if Vietnamese translation already exists
         base_name = vtt_file.stem
         if base_name.endswith('.en'):
             base_name = base_name[:-3]  # Remove .en suffix
@@ -377,9 +372,31 @@ def translate_subtitle_files(
         
         if expected_translated_path.exists():
             if progress_callback:
-                progress_callback(f"✅ Translation already exists: {expected_translated_path.name}")
-            logging.info(f"Vietnamese translation already exists: {expected_translated_path.name}")
+                progress_callback(f"✅ Using existing translated subtitles: {expected_translated_path.name}")
+            logging.info(f"Using existing translated subtitles: {expected_translated_path.name}")
             translated_files.append(expected_translated_path)
+    
+    # If we found existing translations, return them
+    if translated_files:
+        return translated_files
+    
+    # No Vietnamese subtitles found - proceed with translation if API key is available
+    if not api_key:
+        if progress_callback:
+            progress_callback("⚠️ No Vietnamese subtitles found and no API key for translation")
+        logging.warning("No Vietnamese subtitles found and no Claude API key provided. Skipping subtitle translation.")
+        return []
+    
+    translator = SubtitleTranslator(api_key=api_key)
+    
+    if not translator.client:
+        logging.warning("Failed to initialize translator. Skipping subtitle translation.")
+        return []
+    
+    # Translate English subtitles
+    for vtt_file in vtt_files:
+        # Skip already translated files
+        if any(code in vtt_file.stem for code in ['.vi', '.es', '.fr', '.de', '.zh', '.ja', '.ko', '.trans']):
             continue
             
         logging.info(f"Translating subtitle file: {vtt_file.name}")
