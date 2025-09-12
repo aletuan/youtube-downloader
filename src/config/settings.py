@@ -2,6 +2,7 @@
 """Configuration settings for YouTube downloader"""
 
 import os
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -10,7 +11,7 @@ except ImportError:
     pass
 
 # Download settings
-DEFAULT_OUTPUT_DIR = "download-data"
+DEFAULT_OUTPUT_DIR = str(Path.cwd() / "download-data")
 SUBTITLE_LANGUAGES = ['en', 'en-US']
 SUBTITLE_FORMAT = 'vtt'
 VIDEO_FORMAT = 'best'
