@@ -20,7 +20,10 @@ class VideoPlayerScreen:
         """Create the video player view"""
         self.video_path = video_path
         self.video_title = video_title
-        
+
+        # Get theme-aware colors
+        is_dark_mode = self.page.theme_mode == ft.ThemeMode.DARK
+
         # Back button
         back_button = ft.IconButton(
             ft.Icons.ARROW_BACK,
@@ -28,13 +31,13 @@ class VideoPlayerScreen:
             on_click=self._on_back_click,
             icon_size=24
         )
-        
-        # Video title
+
+        # Video title with theme-aware colors
         title_text = ft.Text(
             video_title,
             size=20,
             weight=ft.FontWeight.BOLD,
-            color=ft.Colors.GREY_800,
+            color=ft.Colors.WHITE if is_dark_mode else ft.Colors.GREY_800,
             text_align=ft.TextAlign.CENTER
         )
         
@@ -70,11 +73,11 @@ class VideoPlayerScreen:
         content_items.extend([
             ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
             
-            # Video player
+            # Video player with theme-aware container
             ft.Container(
                 content=video_player,
                 alignment=ft.alignment.center,
-                bgcolor=ft.Colors.BLACK12,
+                bgcolor=ft.Colors.GREY_900 if is_dark_mode else ft.Colors.BLACK12,
                 border_radius=12,
                 padding=10
             )
@@ -95,27 +98,30 @@ class VideoPlayerScreen:
                     expand=True
                 )
             ],
-            bgcolor=ft.Colors.WHITE
+            bgcolor=ft.Colors.GREY_900 if is_dark_mode else ft.Colors.WHITE
         )
     
     def _create_video_player(self) -> ft.Video:
         """Create the video player component that loads local downloaded video files"""
+        # Get theme-aware colors
+        is_dark_mode = self.page.theme_mode == ft.ThemeMode.DARK
+
         if not self.video_path or not os.path.exists(self.video_path):
             # Show placeholder if video not found
             error_message = "Video file not found" if self.video_path else "No video selected"
             if self.video_path:
                 error_message += f"\nPath: {self.video_path}"
-            
+
             return ft.Container(
                 content=ft.Column([
                     ft.Icon(ft.Icons.ERROR_OUTLINE, size=64, color=ft.Colors.RED_400),
                     ft.Text(error_message, color=ft.Colors.RED_600, text_align=ft.TextAlign.CENTER),
-                    ft.Text("Please ensure the video was downloaded successfully", 
-                           size=12, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                    ft.Text("Please ensure the video was downloaded successfully",
+                           size=12, color=ft.Colors.GREY_500 if is_dark_mode else ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
                 width=640,
                 height=360,
-                bgcolor=ft.Colors.GREY_100,
+                bgcolor=ft.Colors.GREY_800 if is_dark_mode else ft.Colors.GREY_100,
                 border_radius=8,
                 alignment=ft.alignment.center,
                 padding=20
@@ -129,14 +135,14 @@ class VideoPlayerScreen:
             return ft.Container(
                 content=ft.Column([
                     ft.Icon(ft.Icons.WARNING, size=64, color=ft.Colors.ORANGE_400),
-                    ft.Text(f"Unsupported video format: {file_extension}", 
+                    ft.Text(f"Unsupported video format: {file_extension}",
                            color=ft.Colors.ORANGE_600, text_align=ft.TextAlign.CENTER),
-                    ft.Text(f"Supported formats: {', '.join(video_extensions)}", 
-                           size=12, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                    ft.Text(f"Supported formats: {', '.join(video_extensions)}",
+                           size=12, color=ft.Colors.GREY_500 if is_dark_mode else ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
                 width=640,
                 height=360,
-                bgcolor=ft.Colors.GREY_100,
+                bgcolor=ft.Colors.GREY_800 if is_dark_mode else ft.Colors.GREY_100,
                 border_radius=8,
                 alignment=ft.alignment.center,
                 padding=20
@@ -214,14 +220,14 @@ class VideoPlayerScreen:
             return ft.Container(
                 content=ft.Column([
                     ft.Icon(ft.Icons.ERROR, size=64, color=ft.Colors.RED_400),
-                    ft.Text(f"Error loading video: {str(e)}", 
+                    ft.Text(f"Error loading video: {str(e)}",
                            color=ft.Colors.RED_600, text_align=ft.TextAlign.CENTER),
-                    ft.Text(f"File: {self.video_path}", 
-                           size=11, color=ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
+                    ft.Text(f"File: {self.video_path}",
+                           size=11, color=ft.Colors.GREY_500 if is_dark_mode else ft.Colors.GREY_600, text_align=ft.TextAlign.CENTER)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
                 width=640,
                 height=360,
-                bgcolor=ft.Colors.GREY_100,
+                bgcolor=ft.Colors.GREY_800 if is_dark_mode else ft.Colors.GREY_100,
                 border_radius=8,
                 alignment=ft.alignment.center,
                 padding=20
@@ -274,43 +280,46 @@ class VideoPlayerScreen:
         """Get subtitle availability information"""
         if not self.video_path:
             return None
-            
+
+        # Get theme-aware colors
+        is_dark_mode = self.page.theme_mode == ft.ThemeMode.DARK
+
         video_dir = Path(self.video_path).parent
-        
+
         # Check for Vietnamese subtitles
         vietnamese_subtitle = None
         for subtitle_file in video_dir.glob("*.vi.vtt"):
             vietnamese_subtitle = subtitle_file
             break
-            
+
         # Check for English subtitles
         english_subtitle = None
         for subtitle_file in video_dir.glob("*.en.vtt"):
             english_subtitle = subtitle_file
             break
-            
+
         if vietnamese_subtitle or english_subtitle:
             subtitle_text_parts = []
-            
+
             if vietnamese_subtitle:
                 subtitle_text_parts.append("🇻🇳 Vietnamese subtitles (active)")
             elif english_subtitle:
                 subtitle_text_parts.append("🇺🇸 English subtitles (active)")
-                
+
             subtitle_text = " • ".join(subtitle_text_parts)
-            
+
             return ft.Container(
                 content=ft.Text(
                     subtitle_text,
                     size=12,
-                    color=ft.Colors.GREEN_600,
+                    color=ft.Colors.GREEN_400 if is_dark_mode else ft.Colors.GREEN_600,
                     text_align=ft.TextAlign.CENTER,
                     weight=ft.FontWeight.W_500
                 ),
                 padding=ft.padding.symmetric(horizontal=20, vertical=5),
-                bgcolor=ft.Colors.GREEN_50,
+                bgcolor=ft.Colors.GREEN_900 if is_dark_mode else ft.Colors.GREEN_50,
                 border_radius=8,
-                border=ft.border.all(1, ft.Colors.GREEN_200)
+                border=ft.border.all(1, ft.Colors.GREEN_700 if is_dark_mode else ft.Colors.GREEN_200)
             )
-        
+
         return None
