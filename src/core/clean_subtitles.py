@@ -81,8 +81,14 @@ def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
             # Keep other lines (like index numbers)
             cleaned_lines.append(line)
 
+    # Remove empty lines and ensure proper spacing
+    final_lines = []
+    for line in cleaned_lines:
+        if line.strip():  # Only keep non-empty lines
+            final_lines.append(line)
+
     # Only keep block if it has content after cleaning
-    return bool(cleaned_lines and any(line.strip() for line in cleaned_lines)), cleaned_lines
+    return bool(final_lines and any(line.strip() for line in final_lines)), final_lines
 
 def _process_vtt_file(file_path, remove_artifacts=True, remove_html_tags=True):
     """
@@ -112,14 +118,36 @@ def _process_vtt_file(file_path, remove_artifacts=True, remove_html_tags=True):
             if should_keep:
                 cleaned_blocks.append('\n'.join(cleaned_lines))
         
-        # Reconstruct content
+        # Reconstruct content with compact VTT spacing
+        # No empty lines between timing lines and content
         cleaned_content = '\n\n'.join(cleaned_blocks)
         if cleaned_blocks:
             cleaned_content += '\n'
         
+        # Final pass: remove empty lines after timing lines
+        lines = cleaned_content.split('\n')
+        final_lines = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            final_lines.append(line)
+
+            # If this is a timing line, skip any empty lines that follow
+            if '-->' in line:
+                i += 1
+                # Skip empty lines after timing line
+                while i < len(lines) and not lines[i].strip():
+                    i += 1
+                # Don't increment i here, let the main loop handle the next line
+                continue
+            else:
+                i += 1
+
+        final_content = '\n'.join(final_lines)
+
         # Write cleaned content back to file
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(cleaned_content)
+            f.write(final_content)
         
         return True
         
