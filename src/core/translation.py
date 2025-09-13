@@ -22,6 +22,13 @@ try:
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
+# Import cleaning functions from clean_subtitles module
+try:
+    from .clean_subtitles import clean_vietnamese_translation_artifacts
+    CLEANING_AVAILABLE = True
+except ImportError:
+    CLEANING_AVAILABLE = False
+
 # Import configuration settings
 try:
     from config.settings import (
@@ -128,10 +135,13 @@ class SubtitleTranslator:
             )
             
             # Clean Vietnamese translation artifacts if target language is Vietnamese
-            if target_language.lower() == "vietnamese":
+            if target_language.lower() == "vietnamese" and CLEANING_AVAILABLE:
                 if progress_callback:
-                    progress_callback("🧹 Cleaning translation artifacts...")
-                clean_vietnamese_translation_artifacts(translated_vtt_path)
+                    progress_callback("🧹 Cleaning translation artifacts and HTML tags...")
+                try:
+                    clean_vietnamese_translation_artifacts(translated_vtt_path)
+                except Exception as e:
+                    logging.warning(f"Failed to clean translation artifacts: {e}")
             
             if progress_callback:
                 progress_callback(f"✅ Translation completed: {translated_vtt_path.name}")
@@ -338,61 +348,6 @@ Subtitle text to translate:
         return language_codes.get(target_language.lower(), 'trans')
 
 
-def clean_vietnamese_translation_artifacts(vtt_path: Path) -> bool:
-    """
-    Clean Vietnamese translation artifacts from VTT file.
-    Removes lines containing "sau đây", "bản dịch", or "phụ đề" and their complete VTT entries.
-    
-    Args:
-        vtt_path: Path to Vietnamese VTT file to clean
-        
-    Returns:
-        True if cleaning was successful, False otherwise
-    """
-    try:
-        with open(vtt_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Split content by double newlines to get individual VTT entries
-        blocks = re.split(r'\n\n+', content.strip())
-        
-        cleaned_blocks = []
-        
-        for block in blocks:
-            lines = block.strip().split('\n')
-            
-            # Skip empty blocks
-            if not lines or not any(line.strip() for line in lines):
-                continue
-            
-            # Check if any line in this block contains unwanted Vietnamese phrases
-            has_artifact = False
-            for line in lines:
-                if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề']):
-                    has_artifact = True
-                    logging.info(f"Removing VTT entry with translation artifact: {line.strip()}")
-                    break
-            
-            # Keep block only if it doesn't contain artifacts
-            if not has_artifact:
-                cleaned_blocks.append(block)
-        
-        # Reconstruct content
-        cleaned_content = '\n\n'.join(cleaned_blocks)
-        if cleaned_blocks:
-            cleaned_content += '\n'
-        
-        # Write cleaned content back to file
-        with open(vtt_path, 'w', encoding='utf-8') as f:
-            f.write(cleaned_content)
-        
-        logging.info(f"Cleaned Vietnamese translation artifacts from: {vtt_path}")
-        return True
-        
-    except Exception as e:
-        logging.error(f"Error cleaning Vietnamese translation artifacts from {vtt_path}: {e}")
-        return False
-
 
 def translate_subtitle_files(
     video_folder: Path,
@@ -480,12 +435,15 @@ def translate_subtitle_files(
             translated_files.append(translated_path)
     
     # Clean Vietnamese translation artifacts from all Vietnamese files
-    if target_language.lower() == "vietnamese":
+    if target_language.lower() == "vietnamese" and CLEANING_AVAILABLE:
         vietnamese_files = [f for f in translated_files if f.stem.endswith('.vi')]
         for vtt_file in vietnamese_files:
             if progress_callback:
-                progress_callback(f"🧹 Cleaning artifacts from {vtt_file.name}...")
-            clean_vietnamese_translation_artifacts(vtt_file)
+                progress_callback(f"🧹 Cleaning artifacts and HTML tags from {vtt_file.name}...")
+            try:
+                clean_vietnamese_translation_artifacts(vtt_file)
+            except Exception as e:
+                logging.warning(f"Failed to clean artifacts from {vtt_file.name}: {e}")
     
     return translated_files
 

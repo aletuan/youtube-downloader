@@ -1,19 +1,114 @@
 #!/usr/bin/env python3
 """
-Clean subtitle files by removing translation artifacts.
+Clean subtitle files by removing translation artifacts and HTML-like tags.
 Removes lines with "sau đây", "bản dịch", or "phụ đề" and their complete VTT entries.
+Also removes HTML-like tags such as <c>, </c>, <00:03:09.360>, etc.
 """
 
 import re
 from pathlib import Path
 
-def clean_vietnamese_subtitle_file(file_path):
+def clean_html_tags(text):
     """
-    Clean a Vietnamese subtitle file by removing unwanted translation artifacts.
-    Removes complete VTT entries containing "sau đây", "bản dịch", or "phụ đề".
+    Remove HTML-like tags from subtitle text.
     
     Args:
-        file_path (str): Path to the .vi.vtt file to clean
+        text (str): Text containing HTML-like tags
+        
+    Returns:
+        str: Text with HTML-like tags removed
+    """
+    # Remove timestamp tags like <00:03:09.360>
+    text = re.sub(r'<\d{2}:\d{2}:\d{2}\.\d{3}>', '', text)
+    
+    # Remove other HTML-like tags like <c>, </c>, <i>, </i>, etc.
+    text = re.sub(r'<[^>]*>', '', text)
+    
+    # Clean up extra spaces that may result from tag removal
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    
+    return text
+
+def _has_translation_artifacts(lines):
+    """
+    Check if any line contains Vietnamese translation artifacts.
+    
+    Args:
+        lines (list): List of lines to check
+        
+    Returns:
+        tuple: (has_artifacts: bool, artifact_line: str or None)
+    """
+    for line in lines:
+        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề']):
+            return True, line.strip()
+    return False, None
+
+def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
+    """
+    Clean a single VTT block (subtitle entry).
+    
+    Args:
+        lines (list): Lines of the VTT block
+        remove_artifacts (bool): Whether to check for translation artifacts
+        remove_html_tags (bool): Whether to remove HTML tags
+        
+    Returns:
+        tuple: (should_keep: bool, cleaned_lines: list)
+    """
+    # Skip empty blocks
+    if not lines or not any(line.strip() for line in lines):
+        return False, []
+    
+    # Check for translation artifacts if requested
+    if remove_artifacts:
+        has_artifacts, artifact_line = _has_translation_artifacts(lines)
+        if has_artifacts:
+            print(f"Removing VTT entry with translation artifact: {artifact_line}")
+            return False, []
+    
+    cleaned_lines = []
+    
+    for line in lines:
+        # Keep timing lines as-is (contain -->)
+        if '-->' in line:
+            cleaned_lines.append(line)
+        elif line.strip() and not line.isdigit():
+            # Process text content lines
+            if remove_html_tags:
+                original_line = line
+                cleaned_line = clean_html_tags(line)
+                
+                # Only report if tags were actually removed
+                if original_line != cleaned_line:
+                    print(f"Cleaned HTML tags from: {original_line.strip()}")
+                    print(f"Result: {cleaned_line}")
+                
+                # Only add non-empty lines
+                if cleaned_line.strip():
+                    cleaned_lines.append(cleaned_line)
+            else:
+                # Keep line as-is if not cleaning HTML tags
+                cleaned_lines.append(line)
+        else:
+            # Keep other lines (like index numbers)
+            cleaned_lines.append(line)
+    
+    # Only keep block if it has content after cleaning
+    return bool(cleaned_lines and any(line.strip() for line in cleaned_lines)), cleaned_lines
+
+def _process_vtt_file(file_path, remove_artifacts=True, remove_html_tags=True):
+    """
+    Core VTT file processing function.
+    
+    Args:
+        file_path (str): Path to VTT file
+        remove_artifacts (bool): Whether to remove translation artifacts
+        remove_html_tags (bool): Whether to remove HTML tags
+        
+    Returns:
+        bool: True if successful, False otherwise
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -26,22 +121,10 @@ def clean_vietnamese_subtitle_file(file_path):
         
         for block in blocks:
             lines = block.strip().split('\n')
+            should_keep, cleaned_lines = _clean_vtt_block(lines, remove_artifacts, remove_html_tags)
             
-            # Skip empty blocks
-            if not lines or not any(line.strip() for line in lines):
-                continue
-            
-            # Check if any line in this block contains unwanted Vietnamese phrases
-            has_artifact = False
-            for line in lines:
-                if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề']):
-                    has_artifact = True
-                    print(f"Removing VTT entry with translation artifact: {line.strip()}")
-                    break
-            
-            # Keep block only if it doesn't contain artifacts
-            if not has_artifact:
-                cleaned_blocks.append(block)
+            if should_keep:
+                cleaned_blocks.append('\n'.join(cleaned_lines))
         
         # Reconstruct content
         cleaned_content = '\n\n'.join(cleaned_blocks)
@@ -52,19 +135,64 @@ def clean_vietnamese_subtitle_file(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(cleaned_content)
         
-        print(f"Cleaned: {file_path}")
         return True
         
     except Exception as e:
-        print(f"Error cleaning {file_path}: {e}")
+        print(f"Error processing {file_path}: {e}")
         return False
 
-def find_and_clean_vietnamese_subtitles(base_dir="download-data"):
+# Public API functions with clear purposes
+
+def clean_vietnamese_subtitle_file(file_path):
+    """
+    Clean Vietnamese subtitle file by removing both translation artifacts and HTML tags.
+    
+    Args:
+        file_path (str): Path to the .vi.vtt file to clean
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    result = _process_vtt_file(file_path, remove_artifacts=True, remove_html_tags=True)
+    if result:
+        print(f"Cleaned artifacts and HTML tags from: {file_path}")
+    return result
+
+def clean_html_tags_only(file_path):
+    """
+    Clean only HTML tags from subtitle file, keeping translation artifacts.
+    
+    Args:
+        file_path (str): Path to the .vi.vtt file to clean
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    result = _process_vtt_file(file_path, remove_artifacts=False, remove_html_tags=True)
+    if result:
+        print(f"Cleaned HTML tags from: {file_path}")
+    return result
+
+def clean_vietnamese_translation_artifacts(vtt_path):
+    """
+    Main cleaning function used by translation module.
+    Removes both Vietnamese translation artifacts and HTML tags.
+    
+    Args:
+        vtt_path (str or Path): Path to Vietnamese VTT file to clean
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    return clean_vietnamese_subtitle_file(str(vtt_path))
+
+def find_and_clean_vietnamese_subtitles(base_dir="download-data", clean_tags_only=False):
     """
     Find all Vietnamese subtitle files and clean them.
     
     Args:
         base_dir (str): Base directory to search for subtitle files
+        clean_tags_only (bool): If True, only clean HTML tags without removing artifacts
     """
     base_path = Path(base_dir)
     
@@ -79,15 +207,23 @@ def find_and_clean_vietnamese_subtitles(base_dir="download-data"):
         print("No Vietnamese subtitle files found.")
         return
     
+    action = "Cleaning HTML tags only from" if clean_tags_only else "Processing"
     print(f"Found {len(vietnamese_files)} Vietnamese subtitle files:")
     
     cleaned_count = 0
     for file_path in vietnamese_files:
-        print(f"Processing: {file_path}")
-        if clean_vietnamese_subtitle_file(file_path):
+        print(f"{action}: {file_path}")
+        
+        if clean_tags_only:
+            success = clean_html_tags_only(file_path)
+        else:
+            success = clean_vietnamese_subtitle_file(file_path)
+        
+        if success:
             cleaned_count += 1
     
-    print(f"\nCleaned {cleaned_count} files successfully.")
+    action_past = "HTML tags cleaned from" if clean_tags_only else "Cleaned"
+    print(f"\n{action_past} {cleaned_count} files successfully.")
 
 if __name__ == "__main__":
     find_and_clean_vietnamese_subtitles()
