@@ -41,7 +41,7 @@ def _has_translation_artifacts(lines):
         tuple: (has_artifacts: bool, artifact_line: str or None)
     """
     for line in lines:
-        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề', 'Vietnamese translation']):
+        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề', 'vietnamese translation', 'here\'s the vietnamese', 'here are the vietnamese']):
             return True, line.strip()
     return False, None
 
