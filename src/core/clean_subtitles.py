@@ -41,7 +41,7 @@ def _has_translation_artifacts(lines):
         tuple: (has_artifacts: bool, artifact_line: str or None)
     """
     for line in lines:
-        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề']):
+        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề', 'Vietnamese translation']):
             return True, line.strip()
     return False, None
 
@@ -65,7 +65,7 @@ def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
     if remove_artifacts:
         has_artifacts, artifact_line = _has_translation_artifacts(lines)
         if has_artifacts:
-            print(f"Removing VTT entry with translation artifact: {artifact_line}")
+            # print(f"Removing VTT entry with translation artifact: {artifact_line}")
             return False, []
     
     cleaned_lines = []
@@ -80,10 +80,10 @@ def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
                 original_line = line
                 cleaned_line = clean_html_tags(line)
                 
-                # Only report if tags were actually removed
-                if original_line != cleaned_line:
-                    print(f"Cleaned HTML tags from: {original_line.strip()}")
-                    print(f"Result: {cleaned_line}")
+                # Only report if tags were actually removed (debug logging disabled)
+                # if original_line != cleaned_line:
+                #     print(f"Cleaned HTML tags from: {original_line.strip()}")
+                #     print(f"Result: {cleaned_line}")
                 
                 # Only add non-empty lines
                 if cleaned_line.strip():
@@ -154,8 +154,8 @@ def clean_vietnamese_subtitle_file(file_path):
         bool: True if successful, False otherwise
     """
     result = _process_vtt_file(file_path, remove_artifacts=True, remove_html_tags=True)
-    if result:
-        print(f"Cleaned artifacts and HTML tags from: {file_path}")
+    # if result:
+    #     print(f"Cleaned artifacts and HTML tags from: {file_path}")
     return result
 
 def clean_html_tags_only(file_path):
@@ -169,8 +169,8 @@ def clean_html_tags_only(file_path):
         bool: True if successful, False otherwise
     """
     result = _process_vtt_file(file_path, remove_artifacts=False, remove_html_tags=True)
-    if result:
-        print(f"Cleaned HTML tags from: {file_path}")
+    # if result:
+    #     print(f"Cleaned HTML tags from: {file_path}")
     return result
 
 def clean_vietnamese_translation_artifacts(vtt_path):

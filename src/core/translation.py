@@ -58,10 +58,15 @@ class VTTEntry:
 class SubtitleTranslator:
     """Handles VTT subtitle translation using Claude API"""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-3-haiku-20240307"):
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         """Initialize translator with Claude API credentials"""
         self.api_key = api_key
-        self.model = model
+        # Use config default if no model specified
+        try:
+            from config.settings import TRANSLATION_MODEL
+            self.model = model or TRANSLATION_MODEL
+        except ImportError:
+            self.model = model or "claude-3-5-sonnet-20241022"
         self.client = None
         
         if api_key and ANTHROPIC_AVAILABLE:
@@ -208,9 +213,11 @@ class SubtitleTranslator:
         batch_size: Optional[int] = None  # Use config default if not specified
     ) -> List[str]:
         """Translate text batch using Claude API with rate limiting"""
-        # Use configuration defaults if not specified, adjust for model limitations
+        # Use configuration defaults if not specified, optimize for model capabilities
         if batch_size is None:
-            if self.model == "claude-3-haiku-20240307":
+            if self.model == "claude-3-5-sonnet-20241022":
+                batch_size = min(TRANSLATION_BATCH_SIZE, 150)  # Larger batch for Sonnet model
+            elif self.model == "claude-3-haiku-20240307":
                 batch_size = min(TRANSLATION_BATCH_SIZE, 25)  # Smaller batch for Haiku model
             else:
                 batch_size = TRANSLATION_BATCH_SIZE
@@ -229,8 +236,10 @@ class SubtitleTranslator:
                 # Prepare batch for translation
                 batch_text = '\n---SEPARATOR---\n'.join(batch)
                 
-                # Optimize API parameters for model limits - Claude Haiku has 4096 token limit
-                if self.model == "claude-3-haiku-20240307":
+                # Optimize API parameters for model limits
+                if self.model == "claude-3-5-sonnet-20241022":
+                    max_tokens = min(TRANSLATION_MAX_TOKENS, 4000 + len(batch) * 80)  # Generous limit for Sonnet
+                elif self.model == "claude-3-haiku-20240307":
                     max_tokens = min(4096, 2000 + len(batch) * 30)  # Conservative limit for Haiku
                 else:
                     max_tokens = min(TRANSLATION_MAX_TOKENS, 4000 + len(batch) * 50)  # For other models
@@ -242,24 +251,8 @@ class SubtitleTranslator:
                     temperature=0.1,  # Low temperature for consistent translation
                     messages=[{
                         "role": "user",
-                        "content": f"""Please translate the following subtitle text from English to {target_language}. 
+                        "content": f"""Translate these English subtitles to {target_language}. Keep the same number of lines and use ---SEPARATOR--- between translations:
 
-CRITICAL INSTRUCTIONS:
-1. Preserve ALL timestamps and VTT formatting
-2. Translate ONLY the actual spoken content
-3. Keep speaker indicators (- Name:) but translate their speech
-4. Maintain the same number of subtitle entries
-5. Preserve line breaks and text structure
-6. Keep technical terms and proper nouns when contextually appropriate
-7. Ensure natural, readable translations
-8. Handle incomplete sentences and informal speech naturally
-9. Separate translations with ---SEPARATOR---
-10. Do not add explanations or extra content
-
-INPUT FORMAT: VTT subtitle format
-OUTPUT REQUIRED: Same format with translated content only
-
-Subtitle text to translate:
 {batch_text}"""
                     }]
                 )
@@ -280,11 +273,9 @@ Subtitle text to translate:
                 
                 translated_texts.extend(translated_batch)
                 
-                # Dynamic rate limiting based on configuration and batch size
-                if batch_idx + batch_size < len(texts):
-                    # Use configured delay with dynamic adjustment for larger batches
-                    delay = max(TRANSLATION_RATE_LIMIT_DELAY, TRANSLATION_RATE_LIMIT_DELAY * (1.0 - (batch_size / 200)))
-                    time.sleep(delay)
+                # Optional rate limiting - skip if delay is 0 for maximum speed
+                if batch_idx + batch_size < len(texts) and TRANSLATION_RATE_LIMIT_DELAY > 0:
+                    time.sleep(TRANSLATION_RATE_LIMIT_DELAY)
                     
             except Exception as e:
                 logging.error(f"Error translating batch {current_batch_num}: {e}")
