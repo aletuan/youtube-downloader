@@ -30,61 +30,47 @@ def clean_html_tags(text):
     
     return text
 
-def _has_translation_artifacts(lines):
-    """
-    Check if any line contains Vietnamese translation artifacts.
-    
-    Args:
-        lines (list): List of lines to check
-        
-    Returns:
-        tuple: (has_artifacts: bool, artifact_line: str or None)
-    """
-    for line in lines:
-        if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề', 'vietnamese translation', 'here\'s the vietnamese', 'here are the vietnamese']):
-            return True, line.strip()
-    return False, None
+# Note: _has_translation_artifacts function removed - now doing line-by-line detection in _clean_vtt_block
 
 def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
     """
     Clean a single VTT block (subtitle entry).
-    
+
     Args:
         lines (list): Lines of the VTT block
         remove_artifacts (bool): Whether to check for translation artifacts
         remove_html_tags (bool): Whether to remove HTML tags
-        
+
     Returns:
         tuple: (should_keep: bool, cleaned_lines: list)
     """
     # Skip empty blocks
     if not lines or not any(line.strip() for line in lines):
         return False, []
-    
-    # Check for translation artifacts if requested
-    if remove_artifacts:
-        has_artifacts, artifact_line = _has_translation_artifacts(lines)
-        if has_artifacts:
-            # print(f"Removing VTT entry with translation artifact: {artifact_line}")
-            return False, []
-    
+
     cleaned_lines = []
-    
+
     for line in lines:
         # Keep timing lines as-is (contain -->)
         if '-->' in line:
             cleaned_lines.append(line)
         elif line.strip() and not line.isdigit():
+            # Check for translation artifacts in individual lines
+            if remove_artifacts:
+                if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề', 'vietnamese translation', 'here\'s the vietnamese', 'here are the vietnamese']):
+                    # Skip this line as it contains artifacts
+                    continue
+
             # Process text content lines
             if remove_html_tags:
                 original_line = line
                 cleaned_line = clean_html_tags(line)
-                
+
                 # Only report if tags were actually removed (debug logging disabled)
                 # if original_line != cleaned_line:
                 #     print(f"Cleaned HTML tags from: {original_line.strip()}")
                 #     print(f"Result: {cleaned_line}")
-                
+
                 # Only add non-empty lines
                 if cleaned_line.strip():
                     cleaned_lines.append(cleaned_line)
@@ -94,7 +80,7 @@ def _clean_vtt_block(lines, remove_artifacts=True, remove_html_tags=True):
         else:
             # Keep other lines (like index numbers)
             cleaned_lines.append(line)
-    
+
     # Only keep block if it has content after cleaning
     return bool(cleaned_lines and any(line.strip() for line in cleaned_lines)), cleaned_lines
 
