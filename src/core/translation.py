@@ -127,6 +127,12 @@ class SubtitleTranslator:
                 vtt_path, vtt_entries, translated_texts, target_language
             )
             
+            # Clean Vietnamese translation artifacts if target language is Vietnamese
+            if target_language.lower() == "vietnamese":
+                if progress_callback:
+                    progress_callback("🧹 Cleaning translation artifacts...")
+                clean_vietnamese_translation_artifacts(translated_vtt_path)
+            
             if progress_callback:
                 progress_callback(f"✅ Translation completed: {translated_vtt_path.name}")
                 
@@ -228,13 +234,20 @@ class SubtitleTranslator:
                         "role": "user",
                         "content": f"""Please translate the following subtitle text from English to {target_language}. 
 
-IMPORTANT INSTRUCTIONS:
-1. Translate each subtitle entry separately
-2. Maintain the same number of entries as the input
-3. Preserve the meaning and context
-4. Keep translations natural and readable
-5. Separate each translation with ---SEPARATOR---
-6. Do not add explanations or extra text
+CRITICAL INSTRUCTIONS:
+1. Preserve ALL timestamps and VTT formatting
+2. Translate ONLY the actual spoken content
+3. Keep speaker indicators (- Name:) but translate their speech
+4. Maintain the same number of subtitle entries
+5. Preserve line breaks and text structure
+6. Keep technical terms and proper nouns when contextually appropriate
+7. Ensure natural, readable translations
+8. Handle incomplete sentences and informal speech naturally
+9. Separate translations with ---SEPARATOR---
+10. Do not add explanations or extra content
+
+INPUT FORMAT: VTT subtitle format
+OUTPUT REQUIRED: Same format with translated content only
 
 Subtitle text to translate:
 {batch_text}"""
@@ -325,6 +338,62 @@ Subtitle text to translate:
         return language_codes.get(target_language.lower(), 'trans')
 
 
+def clean_vietnamese_translation_artifacts(vtt_path: Path) -> bool:
+    """
+    Clean Vietnamese translation artifacts from VTT file.
+    Removes lines containing "sau đây", "bản dịch", or "phụ đề" and their complete VTT entries.
+    
+    Args:
+        vtt_path: Path to Vietnamese VTT file to clean
+        
+    Returns:
+        True if cleaning was successful, False otherwise
+    """
+    try:
+        with open(vtt_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Split content by double newlines to get individual VTT entries
+        blocks = re.split(r'\n\n+', content.strip())
+        
+        cleaned_blocks = []
+        
+        for block in blocks:
+            lines = block.strip().split('\n')
+            
+            # Skip empty blocks
+            if not lines or not any(line.strip() for line in lines):
+                continue
+            
+            # Check if any line in this block contains unwanted Vietnamese phrases
+            has_artifact = False
+            for line in lines:
+                if any(phrase in line.lower() for phrase in ['sau đây', 'bản dịch', 'phụ đề']):
+                    has_artifact = True
+                    logging.info(f"Removing VTT entry with translation artifact: {line.strip()}")
+                    break
+            
+            # Keep block only if it doesn't contain artifacts
+            if not has_artifact:
+                cleaned_blocks.append(block)
+        
+        # Reconstruct content
+        cleaned_content = '\n\n'.join(cleaned_blocks)
+        if cleaned_blocks:
+            cleaned_content += '\n'
+        
+        # Write cleaned content back to file
+        with open(vtt_path, 'w', encoding='utf-8') as f:
+            f.write(cleaned_content)
+        
+        logging.info(f"Cleaned Vietnamese translation artifacts from: {vtt_path}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error cleaning Vietnamese translation artifacts from {vtt_path}: {e}")
+        return False
+
+
 def translate_subtitle_files(
     video_folder: Path,
     target_language: str = "Vietnamese", 
@@ -409,6 +478,14 @@ def translate_subtitle_files(
         
         if translated_path:
             translated_files.append(translated_path)
+    
+    # Clean Vietnamese translation artifacts from all Vietnamese files
+    if target_language.lower() == "vietnamese":
+        vietnamese_files = [f for f in translated_files if f.stem.endswith('.vi')]
+        for vtt_file in vietnamese_files:
+            if progress_callback:
+                progress_callback(f"🧹 Cleaning artifacts from {vtt_file.name}...")
+            clean_vietnamese_translation_artifacts(vtt_file)
     
     return translated_files
 
