@@ -41,7 +41,6 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
 
 - **yt-dlp**: Core video downloading functionality (version >= 2023.12.30)
 - **flet**: Modern Python GUI framework (version >= 0.21.0)
-- **anthropic**: Claude API client for subtitle translation (version >= 0.7.0)
 - **pathlib**: Modern path handling
 - **re**: Filename sanitization
 
@@ -121,7 +120,7 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 - **Mocking Strategy**: Uses `MagicMock` to simulate yt-dlp's `YoutubeDL` context manager
 - **Temp Directories**: All file system tests use temporary directories for isolation
 - **Network Isolation**: No actual network calls during testing
-- **Total Coverage**: 32 tests across all modules with comprehensive coverage
+- **Total Coverage**: 85 tests across all modules with comprehensive coverage
 
 ## File Organization
 
@@ -152,101 +151,18 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 ├── download-data/                # Created automatically, contains downloaded videos
 │   └── {VideoTitle}_{VideoID}/
 │       ├── {VideoTitle}.mp4
-│       └── {VideoTitle}.en.vtt
+│       └── {VideoTitle}.en.vtt   # Default subtitles (if available)
 └── cookies/                      # Optional cookies for authentication
 ```
 
-## Subtitle Translation Feature
+## Subtitle Support
 
-### Overview
+The YouTube Downloader downloads default subtitles that are available from YouTube:
 
-The YouTube Downloader now includes automatic subtitle translation using the Claude API. After downloading English subtitles, the system automatically translates them to Vietnamese (or other configurable languages) while preserving the exact timing structure of the original VTT files.
-
-### Key Features
-
-- **Automatic Translation**: Subtitles are translated immediately after video download completes
-- **Timing Preservation**: Original VTT timing structure is maintained perfectly
-- **Non-Destructive**: Original English subtitles are kept alongside translated versions
-- **Smart File Naming**: Translated files use language codes (e.g., `video.vi.vtt` for Vietnamese)
-- **Progress Tracking**: Real-time progress updates in the GUI during translation
-- **Error Handling**: Robust error handling with fallback to original subtitles on failure
-- **Rate Limiting**: Built-in API rate limiting to respect Claude API limits
-
-### Setup Instructions
-
-1. **Install Dependencies**:
-
-   ```bash
-   pip install anthropic>=0.7.0
-   ```
-
-2. **Get Claude API Key**:
-   - Visit <https://console.anthropic.com/>
-   - Create an account and generate an API key
-   - Store the key securely
-
-3. **Configure API Key**:
-   Set the `ANTHROPIC_API_KEY` environment variable:
-
-   ```bash
-   # On macOS/Linux
-   export ANTHROPIC_API_KEY="your-api-key-here"
-   
-   # On Windows
-   set ANTHROPIC_API_KEY=your-api-key-here
-   ```
-
-4. **Configuration Options** (in `src/config/settings.py`):
-
-   ```python
-   TRANSLATION_ENABLED = True  # Enable/disable translation
-   TRANSLATION_TARGET_LANGUAGE = 'Vietnamese'  # Target language
-   TRANSLATION_MODEL = 'claude-3-haiku-20240307'  # Claude model to use
-   TRANSLATION_BATCH_SIZE = 10  # Subtitles per API call
-   TRANSLATION_RATE_LIMIT_DELAY = 1.0  # Seconds between API calls
-   ```
-
-### File Structure After Translation
-
-```text
-download-data/
-└── {VideoTitle}_{VideoID}/
-    ├── {VideoTitle}.mp4        # Video file
-    ├── {VideoTitle}.en.vtt     # Original English subtitles
-    └── {VideoTitle}.vi.vtt     # Vietnamese translated subtitles
-```
-
-### Translation Workflow
-
-1. **Video Download**: yt-dlp downloads video + English subtitles
-2. **VTT Parsing**: System parses VTT structure, extracting timing and text
-3. **Batch Translation**: Text content is sent to Claude API in batches
-4. **VTT Reconstruction**: Translated text is combined with original timing
-5. **File Creation**: New `.vi.vtt` file is created alongside original
-6. **GUI Update**: User sees "Translation completed" status
-
-### Supported Languages
-
-The translation system supports multiple target languages:
-
-- Vietnamese (vi)
-- Spanish (es)  
-- French (fr)
-- German (de)
-- Chinese (zh)
-- Japanese (ja)
-- Korean (ko)
-
-### Usage in Video Player
-
-The video player automatically detects both original and translated subtitle files, allowing users to choose between English and Vietnamese subtitles during playback.
-
-### API Usage and Costs
-
-- Uses Claude 3 Haiku model for cost-effective translation
-- Typical cost: ~$0.01-0.05 per video subtitle file
-- Rate limited to respect API quotas
-- Automatic retry logic for temporary failures
+- Downloads manual subtitles if available from the original video
+- Falls back to auto-generated subtitles when manual ones aren't available
+- Saves subtitles in WebVTT format for maximum compatibility
+- No translation - uses subtitles as provided by YouTube
 
 ## yt-dlp Configuration
 
@@ -315,47 +231,5 @@ The project supports multiple development phases:
      - [x] Subtitle display integration in video player
    - [ ] Quality/format selection options
    - [ ] Playlist support
-   - [x] **Advanced Subtitle Translation** (Complete):
-     - [x] Claude API integration for subtitle translation
-     - [x] Vietnamese translation support with configurable target language
-     - [x] VTT format parsing and reconstruction preserving timing structure
-     - [x] Batch translation with rate limiting and error handling
-     - [x] GUI progress tracking for translation phase
-     - [x] Automatic translation after successful video download
-     - [x] Non-destructive translation (keeps original English subtitles)
-     - [x] Comprehensive test coverage (16 tests)
-   - [ ] Quality/format selection options
-   - [ ] Playlist support
 
-Current status: Full-featured YouTube downloader with modern GUI, comprehensive duplicate detection, download progress tracking, integrated video player functionality, automatic subtitle translation using Claude API, and environment variable configuration with .env file support. The project includes 89 comprehensive tests and is ready for production use.
-
-## Environment Configuration
-
-### .env File Support
-
-The project now includes comprehensive environment variable support through python-dotenv:
-
-1. **Automatic .env Loading**: Both `src/config/settings.py` and `src/core/translation.py` automatically load environment variables from a `.env` file in the project root.
-
-2. **Configuration Variables**:
-   - `ANTHROPIC_API_KEY`: Claude API key for subtitle translation
-   - `TRANSLATION_ENABLED`: Enable/disable translation feature (true/false)
-   - `TRANSLATION_TARGET_LANGUAGE`: Target language for translation (default: Vietnamese)
-   - `TRANSLATION_MODEL`: Claude model to use (default: claude-3-haiku-20240307)
-
-3. **Auth Conflict Resolution**: Using .env files resolves authentication conflicts between Claude Code OAuth tokens and the ANTHROPIC_API_KEY environment variable.
-
-4. **Fallback Defaults**: All environment variables have sensible defaults, so the application works even without a .env file.
-
-### Example .env File
-
-```env
-# YouTube Downloader Environment Variables
-# Claude API Configuration
-ANTHROPIC_API_KEY=sk-ant-api03-your-api-key-here
-
-# Translation Settings (optional overrides)
-TRANSLATION_ENABLED=true
-TRANSLATION_TARGET_LANGUAGE=Vietnamese
-TRANSLATION_MODEL=claude-3-haiku-20240307
-```
+Current status: Full-featured YouTube downloader with modern GUI, comprehensive duplicate detection, download progress tracking, and integrated video player functionality. The project includes 85 comprehensive tests and is ready for production use.

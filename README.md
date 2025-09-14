@@ -1,15 +1,15 @@
 # YouTube Downloader
 
-A professional Python-based YouTube video downloader with automatic subtitle translation, featuring a modern GUI built with Flet and powered by `yt-dlp`.
+A professional Python-based YouTube video downloader featuring a modern GUI built with Flet and powered by `yt-dlp`.
 
 ## Features
 
-- High-Quality Video Downloads: Download YouTube videos in the best available quality
-- Automatic Subtitle Translation: Translate English subtitles to Vietnamese (or other languages) using Claude API
-- Video Preview: Preview video information before downloading
-- Duplicate Detection: Smart detection of existing downloads with re-download options
-- Progress Tracking: Real-time download progress with visual feedback
-- Integrated Video Player: Built-in video player to watch downloaded content
+- **High-Quality Video Downloads**: Download YouTube videos in the best available quality
+- **Default Subtitle Support**: Downloads available subtitles as provided by YouTube
+- **Video Preview**: Preview video information before downloading
+- **Duplicate Detection**: Smart detection of existing downloads with re-download options
+- **Progress Tracking**: Real-time download progress with visual feedback
+- **Integrated Video Player**: Built-in video player to watch downloaded content
 
 ## Quick Start
 
@@ -28,12 +28,6 @@ cd youtube-downloader
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
-
-```bash
-cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
-```
 
 ### Usage
 
@@ -58,25 +52,11 @@ download_youtube_video("https://youtube.com/watch?v=...")
 
 ## Configuration
 
-### Environment Variables
+No additional configuration required. The application works out of the box with default settings:
 
-Create a `.env` file in the project root:
-
-```env
-# Claude API Configuration (required for translation)
-ANTHROPIC_API_KEY=your-api-key-here
-
-# Translation Settings (optional)
-TRANSLATION_ENABLED=true
-TRANSLATION_TARGET_LANGUAGE=Vietnamese
-TRANSLATION_MODEL=claude-3-haiku-20240307
-```
-
-### Getting a Claude API Key
-
-1. Visit [Claude Console](https://console.anthropic.com/)
-2. Create an account and generate an API key
-3. Add the key to your `.env` file
+- Downloads videos in best available quality
+- Downloads subtitles when available from YouTube
+- Saves files to your system's Downloads folder in a `youtube-downloader` subdirectory
 
 ## Project Structure
 
@@ -84,7 +64,6 @@ TRANSLATION_MODEL=claude-3-haiku-20240307
 ├── src/                           # Modern modular implementation
 │   ├── core/
 │   │   ├── downloader.py         # Core download functionality
-│   │   ├── translation.py        # Subtitle translation with Claude API
 │   │   └── utils.py              # Utility functions
 │   ├── config/
 │   │   └── settings.py           # Configuration constants
@@ -93,10 +72,9 @@ TRANSLATION_MODEL=claude-3-haiku-20240307
 │       ├── ui_factory.py         # UI component factory
 │       ├── event_handlers.py     # GUI event handling
 │       └── video_player.py       # Video player screen
-├── tests/                         # Comprehensive test suite (89 tests)
+├── tests/                         # Comprehensive test suite (85 tests)
 ├── youtube_downloader.py         # Backward compatibility wrapper
 ├── requirements.txt              # Python dependencies
-├── .env                          # Environment configuration
 └── download-data/                # Downloaded videos (auto-created)
 ```
 
@@ -105,17 +83,9 @@ TRANSLATION_MODEL=claude-3-haiku-20240307
 ### Video Download
 
 - Downloads videos in the highest available quality
-- Automatically downloads English subtitles (manual or auto-generated)
+- Automatically downloads subtitles when available (manual or auto-generated)
 - Organizes each video in its own subfolder
 - Smart filename sanitization for cross-platform compatibility
-
-### Subtitle Translation
-
-- Automatic translation of English subtitles to Vietnamese (configurable)
-- Preserves exact VTT timing structure
-- Non-destructive (keeps original English subtitles)
-- Batch processing with rate limiting
-- Progress tracking during translation
 
 ### GUI Interface
 
@@ -130,7 +100,7 @@ TRANSLATION_MODEL=claude-3-haiku-20240307
 
 - Built-in video player with standard controls
 - Support for multiple video formats (.mp4, .mkv, .webm, .avi, .mov, .m4v, .flv)
-- Automatic subtitle display (both English and translated)
+- Automatic subtitle display when available
 - Seamless navigation between main app and player
 
 ## Development
@@ -143,7 +113,7 @@ python -m pytest tests/ -v
 
 # Run specific test modules
 python -m pytest tests/test_downloader.py -v
-python -m pytest tests/test_translation.py -v
+python -m pytest tests/test_utils.py -v
 
 # Run with coverage
 coverage run -m pytest tests/ -v
@@ -152,22 +122,20 @@ coverage report --show-missing
 
 ### Test Coverage
 
-The project includes comprehensive test coverage with 89 tests:
+The project includes comprehensive test coverage with 85 tests:
 
 - Core functionality: 15 tests
-- Translation module: 16 tests  
 - GUI framework: 11 tests
 - Progress tracking: 11 tests
 - UI factory: 10 tests
 - Utility functions: 6 tests
 - Validation: 20 tests
+- Downloads folder: 12 tests
 
 ### Dependencies
 
 - yt-dlp: Core video downloading (>= 2023.12.30)
 - flet: Modern GUI framework (>= 0.21.0)
-- anthropic: Claude API client for translation (>= 0.7.0)
-- python-dotenv: Environment variable management (>= 1.0.0)
 
 ## File Organization
 
@@ -177,31 +145,24 @@ Downloaded videos are organized as follows:
 download-data/
 └── {VideoTitle}_{VideoID}/
     ├── {VideoTitle}.mp4        # Video file
-    ├── {VideoTitle}.en.vtt     # Original English subtitles
-    └── {VideoTitle}.vi.vtt     # Vietnamese translated subtitles
+    └── {VideoTitle}.en.vtt     # Subtitles (if available)
 ```
 
-## Supported Languages
+## Supported Subtitle Languages
 
-Translation supports multiple target languages:
+The application downloads subtitles in whatever languages are available from YouTube, commonly including:
 
-- Vietnamese (vi) - Default
-- TODO:
-  - Spanish (es)
-  - French (fr)
-  - German (de)
-  - Chinese (zh)
-  - Japanese (ja)
-  - Korean (ko)
+- English (en, en-US)
+- And any other languages provided by the video uploader
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. Translation not working: Ensure `ANTHROPIC_API_KEY` is set in your `.env` file
-2. Video download fails: Check your internet connection and YouTube URL validity
-3. GUI not starting: Ensure Flet is properly installed: `pip install flet>=0.21.0`
-4. Tests failing: Run `pip install -r requirements.txt` to ensure all dependencies are installed
+1. **Video download fails**: Check your internet connection and YouTube URL validity
+2. **GUI not starting**: Ensure Flet is properly installed: `pip install flet>=0.21.0`
+3. **Tests failing**: Run `pip install -r requirements.txt` to ensure all dependencies are installed
+4. **No subtitles downloaded**: Not all videos have subtitles available - this is normal
 
 ### Error Handling
 
@@ -210,8 +171,8 @@ The application includes comprehensive error handling for:
 - Network connectivity issues
 - Invalid YouTube URLs
 - Missing video files
-- API rate limiting
 - File system permissions
+- Video availability and restrictions
 
 ## License
 
