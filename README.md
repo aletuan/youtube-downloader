@@ -37,16 +37,10 @@ pip install -r requirements.txt
 python src/gui/flet_app.py
 ```
 
-#### Command Line
-
-```bash
-python youtube_downloader.py
-```
-
 #### Python Import
 
 ```python
-from youtube_downloader import download_youtube_video
+from src.core.downloader import download_youtube_video
 download_youtube_video("https://youtube.com/watch?v=...")
 ```
 
@@ -73,7 +67,6 @@ No additional configuration required. The application works out of the box with 
 │       ├── event_handlers.py     # GUI event handling
 │       └── video_player.py       # Video player screen
 ├── tests/                         # Comprehensive test suite (85 tests)
-├── youtube_downloader.py         # Backward compatibility wrapper
 ├── requirements.txt              # Python dependencies
 └── download-data/                # Downloaded videos (auto-created)
 ```
@@ -186,6 +179,6 @@ This project is open source. Please ensure compliance with YouTube's Terms of Se
 4. Run the test suite
 5. Submit a pull request
 
-## Backward Compatibility
+## Modern Architecture
 
-The project maintains backward compatibility with the original API through `youtube_downloader.py`, ensuring existing code continues to work while providing access to new modular features.
+The project uses a clean modular architecture with separation of concerns between core functionality, configuration, and GUI components, making it easy to maintain and extend.

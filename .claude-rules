@@ -1,0 +1,50 @@
+# Claude Rules for YouTube Downloader Project
+
+## Git Operations
+- **NO AUTO COMMIT**: Do not automatically commit changes to git without explicit user request
+- **NO AUTO PUSH**: Do not automatically push commits to remote repositories without explicit user request
+- **EXPLICIT CONFIRMATION**: Always ask for user confirmation before performing git operations
+- **MANUAL WORKFLOW**: Let the user control their git workflow and timing
+
+## Development Guidelines
+- Follow existing code style and patterns in the project
+- Use the existing test suite to verify changes work correctly
+- Keep the modular architecture clean and organized
+- Primary interface is the GUI application (src/gui/flet_app.py)
+
+## Testing Requirements
+- Run tests before suggesting changes are complete
+- Use `PYTHONPATH=src python -m pytest tests/ -v` for testing
+- Ensure all 85 tests pass after making changes
+- Test both GUI and CLI functionality when relevant
+
+## Code Modifications
+- Prefer editing existing files over creating new ones
+- Follow the established project structure in src/ directory
+- Maintain the separation between core, config, and gui modules
+- Keep utility functions in their appropriate modules
+- Use direct imports from src/core modules (no compatibility wrapper)
+
+## Documentation
+- Update CLAUDE.md when making significant architectural changes
+- Update README.md when changing user-facing features
+- Keep documentation accurate and up-to-date with code changes
+- Remove outdated references when functionality is removed
+
+## Dependencies
+- Only use the minimal required dependencies: yt-dlp and flet
+- Avoid adding new dependencies unless absolutely necessary
+- Keep requirements.txt clean and minimal
+- Test that the project works with specified dependency versions
+
+## User Interface
+- Maintain the modern Material Design aesthetic in the GUI
+- Ensure error messages are user-friendly and helpful
+- Preserve the responsive design and proper error handling
+- Keep the video player functionality working correctly
+
+## Project Focus
+- This is a YouTube video downloader with subtitle support
+- No translation functionality - uses default subtitles only
+- Focus on reliability, ease of use, and clean code
+- Maintain the integrated video player and GUI features

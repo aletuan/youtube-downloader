@@ -30,12 +30,6 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
   - Real-time download progress tracking with visual feedback
   - Integrated video player with screen navigation after successful downloads
 
-### Backward Compatibility
-
-- **`youtube_downloader.py`**: Compatibility wrapper maintaining original API
-  - Imports from new modular structure
-  - Preserves all original function signatures
-  - Maintains backward compatibility for existing users
 
 ### Key Dependencies
 
@@ -63,8 +57,6 @@ python -m pytest tests/test_downloader.py::TestGetVideoInfo -v
 # Run single test method
 python -m pytest tests/test_downloader.py::TestDownloadYoutubeVideo::test_download_video_success -v
 
-# Legacy compatibility wrapper testing
-python -c "from youtube_downloader import download_youtube_video; print('Import test passed')"
 ```
 
 ### Coverage Analysis
@@ -83,14 +75,11 @@ coverage html
 ### Running Applications
 
 ```bash
-# Run YouTube downloader (interactive mode)
-python youtube_downloader.py
-
-# Run Flet GUI application
+# Run Flet GUI application (primary interface)
 python src/gui/flet_app.py
 
 # Direct usage (import in Python)
-from youtube_downloader import download_youtube_video
+from src.core.downloader import download_youtube_video
 download_youtube_video("https://youtube.com/watch?v=...")
 ```
 
@@ -145,7 +134,6 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 │   ├── test_downloader.py        # Core functionality tests (15 tests)
 │   ├── test_utils.py             # Utility tests (6 tests)
 │   └── test_flet_setup.py        # GUI framework tests (11 tests)
-├── youtube_downloader.py         # Backward compatibility wrapper
 ├── requirements.txt              # Python dependencies (yt-dlp, flet)
 ├── CLAUDE.md                     # This documentation file
 ├── download-data/                # Created automatically, contains downloaded videos
@@ -196,10 +184,10 @@ def test_function(self, mock_yt_dlp):
     mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
     # Configure mock behavior...
 
-# For backward compatibility testing  
-@patch('youtube_downloader.yt_dlp.YoutubeDL')  # Still works via import chain
-def test_legacy_function(self, mock_yt_dlp):
-    # Test compatibility wrapper behavior...
+# For direct import testing
+@patch('src.core.downloader.yt_dlp.YoutubeDL')
+def test_direct_import(self, mock_yt_dlp):
+    # Test direct module import...
 ```
 
 ### Development Phases
