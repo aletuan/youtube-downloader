@@ -49,7 +49,7 @@ def get_default_downloads_folder():
 
 # Download settings
 DEFAULT_OUTPUT_DIR = get_default_downloads_folder()
-SUBTITLE_LANGUAGES = ['en', 'en-US']
+SUBTITLE_LANGUAGES = ['vi', 'en', 'en-US']
 SUBTITLE_FORMAT = 'vtt'
 VIDEO_FORMAT = 'best'
 

@@ -14,7 +14,7 @@
 
 ## Testing Requirements
 - Run tests before suggesting changes are complete
-- Use `PYTHONPATH=src python -m pytest tests/ -v` for testing
+- Use `PYTHONPATH=src python -m pytest tests/ -v` for testing without asking for approval
 - Ensure all 85 tests pass after making changes
 - Test both GUI and CLI functionality when relevant
 
