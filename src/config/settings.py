@@ -56,12 +56,3 @@ VIDEO_FORMAT = 'best'
 # yt-dlp configuration
 YT_DLP_INFO_OPTIONS = {'quiet': True}
 
-# Translation settings - all configurable via environment variables
-TRANSLATION_ENABLED = os.getenv('TRANSLATION_ENABLED', 'true').lower() == 'true'  # Enable/disable translation feature
-TRANSLATION_TARGET_LANGUAGE = os.getenv('TRANSLATION_TARGET_LANGUAGE', 'Vietnamese')  # Default target language
-TRANSLATION_API_KEY = os.getenv('ANTHROPIC_API_KEY')  # Claude API key from environment
-TRANSLATION_MODEL = os.getenv('TRANSLATION_MODEL', 'claude-3-5-sonnet-20241022')  # Claude model to use
-TRANSLATION_BATCH_SIZE = int(os.getenv('TRANSLATION_BATCH_SIZE', '100'))  # Increased batch size for Claude 3.5 Sonnet
-TRANSLATION_RATE_LIMIT_DELAY = float(os.getenv('TRANSLATION_RATE_LIMIT_DELAY', '0.0'))  # No delay for faster processing
-TRANSLATION_MAX_TOKENS = int(os.getenv('TRANSLATION_MAX_TOKENS', '8000'))  # Maximum tokens for Claude 3.5 Sonnet
-TRANSLATION_TIMEOUT = int(os.getenv('TRANSLATION_TIMEOUT', '60'))  # Timeout per batch in seconds

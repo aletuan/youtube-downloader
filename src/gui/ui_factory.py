@@ -5,13 +5,10 @@ import flet as ft
 import os
 from pathlib import Path
 from config.settings import (
-    DEFAULT_OUTPUT_DIR, 
-    VIDEO_FORMAT, 
-    SUBTITLE_LANGUAGES, 
-    SUBTITLE_FORMAT,
-    TRANSLATION_ENABLED,
-    TRANSLATION_TARGET_LANGUAGE,
-    TRANSLATION_API_KEY
+    DEFAULT_OUTPUT_DIR,
+    VIDEO_FORMAT,
+    SUBTITLE_LANGUAGES,
+    SUBTITLE_FORMAT
 )
 
 
@@ -176,23 +173,11 @@ def create_video_info_card() -> ft.Card:
 def create_config_section() -> ft.Container:
     """Create download configuration display"""
     
-    # Build translation status text
-    if TRANSLATION_ENABLED and TRANSLATION_API_KEY:
-        translation_status = f"Translation: {TRANSLATION_TARGET_LANGUAGE} ✅"
-        translation_color = ft.Colors.GREEN_600
-    elif TRANSLATION_ENABLED and not TRANSLATION_API_KEY:
-        translation_status = "Translation: No API key ⚠️"
-        translation_color = ft.Colors.ORANGE_600
-    else:
-        translation_status = "Translation: Disabled"
-        translation_color = ft.Colors.GREY_400
-    
     config_info = ft.Container(
         content=ft.Column([
             ft.Text("Settings", weight=ft.FontWeight.W_500, size=12, color=ft.Colors.GREY_500),
-            ft.Text(f"Format: {VIDEO_FORMAT} • Subtitles: {', '.join(SUBTITLE_LANGUAGES)}", 
+            ft.Text(f"Format: {VIDEO_FORMAT} • Subtitles: {', '.join(SUBTITLE_LANGUAGES)}",
                    size=11, color=ft.Colors.GREY_400),
-            ft.Text(translation_status, size=11, color=translation_color),
         ], spacing=1),
         padding=8,
         border_radius=4,

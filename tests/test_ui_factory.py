@@ -116,7 +116,7 @@ class TestUIFactory(unittest.TestCase):
         
         # Test config section structure
         column = config_info.content
-        self.assertEqual(len(column.controls), 3)  # Title + Settings line + Translation line
+        self.assertEqual(len(column.controls), 2)  # Title + Settings line
         self.assertEqual(column.controls[0].value, "Settings")
     
     def test_create_theme_button(self):

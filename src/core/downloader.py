@@ -14,10 +14,7 @@ from config.settings import (
     SUBTITLE_LANGUAGES,
     SUBTITLE_FORMAT,
     VIDEO_FORMAT,
-    YT_DLP_INFO_OPTIONS,
-    TRANSLATION_ENABLED,
-    TRANSLATION_TARGET_LANGUAGE,
-    TRANSLATION_API_KEY
+    YT_DLP_INFO_OPTIONS
 )
 
 
@@ -180,58 +177,10 @@ def download_youtube_video(url, output_dir=DEFAULT_OUTPUT_DIR, progress_callback
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            # Success! Now try to translate subtitles
-            success_msg = f"Successfully downloaded video to: {video_folder}\nVideo: {video_title}"
-            
-            # Attempt subtitle translation if enabled
-            translation_success = False
-            if TRANSLATION_ENABLED and TRANSLATION_API_KEY and attempt == 0:  # Only translate if subtitles were downloaded
-                try:
-                    # Import translation module here to avoid import errors if anthropic not installed
-                    from core.translation import translate_subtitle_files
-                    
-                    # Create translation progress callback
-                    def translation_progress_callback(message):
-                        if progress_callback:
-                            # Create a special progress object for translation
-                            translation_progress = DownloadProgress()
-                            translation_progress.status = "translating"
-                            translation_progress.elapsed = 0
-                            progress_callback(translation_progress)
-                        print(f"[TRANSLATION] {message}")
-                    
-                    print(f"🌐 Starting subtitle translation to {TRANSLATION_TARGET_LANGUAGE}...")
-                    translated_files = translate_subtitle_files(
-                        video_folder=video_folder,
-                        target_language=TRANSLATION_TARGET_LANGUAGE,
-                        api_key=TRANSLATION_API_KEY,
-                        progress_callback=translation_progress_callback
-                    )
-                    
-                    if translated_files:
-                        translation_success = True
-                        print(f"✅ Successfully translated {len(translated_files)} subtitle file(s)")
-                        
-                        # Send translation completion status to GUI
-                        if progress_callback:
-                            completion_progress = DownloadProgress()
-                            completion_progress.status = "translation_complete"
-                            completion_progress.elapsed = 0
-                            progress_callback(completion_progress)
-                    else:
-                        print("ℹ️  No subtitles found for translation or translation skipped")
-                        
-                except ImportError:
-                    print("⚠️  Translation module not available. Install 'anthropic' package for subtitle translation.")
-                except Exception as trans_error:
-                    print(f"⚠️  Subtitle translation failed: {trans_error}")
-            
             # Build success message
+            success_msg = f"Successfully downloaded video to: {video_folder}\nVideo: {video_title}"
             if attempt == 0:
-                if translation_success:
-                    success_msg += f" (with subtitles + {TRANSLATION_TARGET_LANGUAGE} translation)"
-                else:
-                    success_msg += " (with subtitles)"
+                success_msg += " (with subtitles)"
             elif attempt == 1:
                 success_msg += " (video only - subtitles skipped due to rate limit)"
             else:
