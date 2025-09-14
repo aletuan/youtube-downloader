@@ -38,7 +38,7 @@ def create_header_section() -> tuple:
 
 
 def create_input_section() -> tuple:
-    """Create URL input and output directory input with browse button"""
+    """Create URL input and output directory input with consistent width"""
     url_input = ft.TextField(
         label="YouTube URL",
         hint_text="https://www.youtube.com/watch?v=...",
@@ -47,34 +47,18 @@ def create_input_section() -> tuple:
         prefix_icon=ft.Icons.LINK,
         content_padding=ft.padding.all(12)
     )
-    
+
     output_dir_input = ft.TextField(
         label="Output Directory",
         value=DEFAULT_OUTPUT_DIR,
-        width=560,  # Reduced to accommodate button with spacing
+        width=600,  # Same width as URL input for consistent UI
         border_radius=8,
         prefix_icon=ft.Icons.FOLDER,
-        hint_text="Select or enter output directory path",
+        hint_text="Enter output directory path",
         content_padding=ft.padding.all(12)
     )
-    
-    browse_button = ft.IconButton(
-        ft.Icons.FOLDER_OPEN,
-        tooltip="Browse for folder",
-        icon_size=20
-    )
-    
-    dir_row = ft.Container(
-        content=ft.Row(
-            [output_dir_input, browse_button],
-            spacing=8,
-            alignment=ft.MainAxisAlignment.START  # Align to start for consistent left edge
-        ),
-        width=600,  # Same width as URL input
-        alignment=ft.alignment.center_left
-    )
-    
-    return url_input, output_dir_input, browse_button, dir_row
+
+    return url_input, output_dir_input
 
 
 def create_button_section() -> tuple:

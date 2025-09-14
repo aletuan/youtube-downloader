@@ -21,48 +21,6 @@ _download_cancelled = False
 _last_downloaded_video_path = None
 
 
-def handle_folder_browse(page: ft.Page, output_dir_input: ft.TextField, status_text: ft.Text):
-    """Handle folder browse button click"""
-    def folder_thread():
-        # Try native dialog with very short timeout
-        selected_path = None
-        if platform.system() == "Darwin":  # macOS
-            try:
-                result = subprocess.run([
-                    "osascript", "-e", 
-                    'tell application "Finder" to return POSIX path of (choose folder with prompt "Select Output Directory")'
-                ], capture_output=True, text=True, timeout=5)  # Very short timeout
-                if result.returncode == 0:
-                    selected_path = result.stdout.strip()
-            except (subprocess.TimeoutExpired, Exception):
-                selected_path = None
-        
-        if selected_path:
-            # Success - update UI
-            path_obj = Path(selected_path)
-            if path_obj.exists() and path_obj.is_dir():
-                output_dir_input.value = selected_path
-                status_text.value = f"✅ Output directory set: {path_obj.name}/"
-                status_text.color = ft.Colors.GREEN_600
-        else:
-            # Failed - show helpful shortcuts
-            shortcuts = get_common_folders()
-            
-            # Set to Downloads as a good default
-            downloads_path = shortcuts["Downloads"]
-            if Path(downloads_path).exists():
-                output_dir_input.value = downloads_path
-                status_text.value = f"📥 Set to Downloads folder. You can edit the path above or drag & drop a folder."
-                status_text.color = ft.Colors.BLUE_600
-            else:
-                status_text.value = "📝 Please type or paste your desired folder path above"
-                status_text.color = ft.Colors.ORANGE_600
-        
-        page.update()
-    
-    # Run in thread
-    threading.Thread(target=folder_thread, daemon=True).start()
-
 
 def handle_preview_click(
     page: ft.Page,

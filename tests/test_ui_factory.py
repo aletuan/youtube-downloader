@@ -41,23 +41,15 @@ class TestUIFactory(unittest.TestCase):
     
     def test_create_input_section(self):
         """Test input section creation"""
-        url_input, output_dir_input, browse_button, dir_row = create_input_section()
-        
+        url_input, output_dir_input = create_input_section()
+
         # Test URL input
         self.assertEqual(url_input.label, "YouTube URL")
         self.assertEqual(url_input.width, 600)
-        
-        # Test output directory input
+
+        # Test output directory input - should have same width as URL input
         self.assertEqual(output_dir_input.label, "Output Directory")
-        self.assertEqual(output_dir_input.width, 560)
-        
-        # Test browse button
-        self.assertEqual(browse_button.tooltip, "Browse for folder")
-        
-        # Test dir row has correct components (Container wrapping a Row)
-        self.assertEqual(len(dir_row.content.controls), 2)
-        self.assertEqual(dir_row.content.controls[0], output_dir_input)
-        self.assertEqual(dir_row.content.controls[1], browse_button)
+        self.assertEqual(output_dir_input.width, 600)
     
     def test_create_button_section(self):
         """Test button section creation"""

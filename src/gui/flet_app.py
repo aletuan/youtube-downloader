@@ -29,7 +29,6 @@ from gui.ui_factory import (
 
 # Import event handlers
 from gui.event_handlers import (
-    handle_folder_browse,
     handle_preview_click,
     handle_download_click,
     handle_play_click,
@@ -58,7 +57,7 @@ def main(page: ft.Page):
     
     # Create UI components using factory functions
     title, subtitle = create_header_section()
-    url_input, output_dir_input, browse_button, dir_row = create_input_section()
+    url_input, output_dir_input = create_input_section()
     preview_button, download_button, play_button, button_row = create_button_section()
     status_text, progress_bar, progress_info = create_status_section()
     video_info_card = create_video_info_card()
@@ -73,9 +72,6 @@ def main(page: ft.Page):
     file_picker = ft.FilePicker(on_result=get_directory_result)
     
     # Set up event handlers
-    def on_browse_folder(_):
-        handle_folder_browse(page, output_dir_input, status_text)
-    
     def on_preview_click(_):
         handle_preview_click(
             page, url_input, output_dir_input, status_text, 
@@ -103,7 +99,6 @@ def main(page: ft.Page):
         handle_theme_toggle(page)
     
     # Assign event handlers to buttons
-    browse_button.on_click = on_browse_folder
     preview_button.on_click = on_preview_click
     download_button.on_click = on_download_click
     play_button.on_click = on_play_click
@@ -116,7 +111,7 @@ def main(page: ft.Page):
         ft.Divider(height=12, color=ft.Colors.TRANSPARENT),
         url_input,
         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
-        dir_row,
+        output_dir_input,
         ft.Divider(height=12, color=ft.Colors.TRANSPARENT),
         button_row,
         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
