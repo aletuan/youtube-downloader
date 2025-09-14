@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-YouTube Downloader GUI - Modern Flet Interface
+YouTube Downloader - Download Screen
 
-A Material Design GUI for downloading YouTube videos with subtitles.
-Refactored with improved separation of concerns and modular design.
+The main download interface where users can enter URLs, configure download settings,
+and manage video downloads. Built with Flet Material Design components.
 """
 
 import flet as ft
@@ -38,7 +38,7 @@ from gui.event_handlers import (
 
 
 def main(page: ft.Page):
-    """Main YouTube Downloader GUI entry point"""
+    """Main download screen entry point"""
     
     # Configure page properties
     page.title = "YouTube Downloader"
@@ -183,5 +183,5 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    # Run the YouTube Downloader GUI
+    # Run the YouTube Downloader Download Screen
     ft.app(target=main)

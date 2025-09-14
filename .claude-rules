@@ -10,7 +10,7 @@
 - Follow existing code style and patterns in the project
 - Use the existing test suite to verify changes work correctly
 - Keep the modular architecture clean and organized
-- Primary interface is the GUI application (src/gui/flet_app.py)
+- Primary interface is the GUI application (src/gui/download_screen.py)
 
 ## Testing Requirements
 - Run tests before suggesting changes are complete

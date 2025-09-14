@@ -34,7 +34,7 @@ pip install -r requirements.txt
 #### GUI Application (Recommended)
 
 ```bash
-python src/gui/flet_app.py
+python src/gui/download_screen.py
 ```
 
 #### Python Import
@@ -62,10 +62,10 @@ No additional configuration required. The application works out of the box with 
 │   ├── config/
 │   │   └── settings.py           # Configuration constants
 │   └── gui/
-│       ├── flet_app.py           # Main GUI application
+│       ├── download_screen.py     # Main GUI application
 │       ├── ui_factory.py         # UI component factory
 │       ├── event_handlers.py     # GUI event handling
-│       └── video_player.py       # Video player screen
+│       └── video_player_screen.py # Video player screen
 ├── tests/                         # Comprehensive test suite (85 tests)
 ├── requirements.txt              # Python dependencies
 └── download-data/                # Downloaded videos (auto-created)

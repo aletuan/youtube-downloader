@@ -23,7 +23,7 @@ This is a Python-based YouTube video downloader that uses yt-dlp to download vid
 - **`src/config/settings.py`**: Configuration constants
   - Default output directory, subtitle languages, video format settings
 
-- **`src/gui/flet_app.py`**: GUI application using Flet framework
+- **`src/gui/download_screen.py`**: GUI application using Flet framework
   - Modern Material Design interface with preview and duplicate detection
   - Threading support for non-blocking downloads and video info fetching
   - Dynamic UI states for existing video handling (re-download workflow)
@@ -49,7 +49,7 @@ python -m pytest tests/ -v
 # Run specific test modules
 python -m pytest tests/test_downloader.py -v
 python -m pytest tests/test_utils.py -v
-python -m pytest tests/test_flet_setup.py -v
+python -m pytest tests/test_gui_framework.py -v
 
 # Run single test class
 python -m pytest tests/test_downloader.py::TestGetVideoInfo -v
@@ -76,7 +76,7 @@ coverage html
 
 ```bash
 # Run Flet GUI application (primary interface)
-python src/gui/flet_app.py
+python src/gui/download_screen.py
 
 # Direct usage (import in Python)
 from src.core.downloader import download_youtube_video
@@ -99,7 +99,7 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 - **`tests/test_utils.py`**: 6 tests covering utility functions
   - TestSanitizeFilename: Filename sanitization edge cases
   
-- **`tests/test_flet_setup.py`**: 11 tests covering GUI framework
+- **`tests/test_gui_framework.py`**: 11 tests covering GUI framework
   - TestFletFramework: Flet import and component creation (4 tests)
   - TestGUIIntegration: GUI integration with core functionality (4 tests)
   - TestGUIErrorHandling: Error handling scenarios (3 tests)
@@ -125,15 +125,15 @@ The modular test suite in `tests/` directory uses unittest with mocking to avoid
 │   │   └── settings.py           # Configuration constants
 │   └── gui/
 │       ├── __init__.py
-│       ├── flet_app.py           # Main GUI application (Flet framework)
+│       ├── download_screen.py     # Main GUI application (Flet framework)
 │       ├── ui_factory.py         # UI component factory functions
 │       ├── event_handlers.py     # GUI event handling logic
-│       └── video_player.py       # Video player screen with navigation
+│       └── video_player_screen.py # Video player screen with navigation
 ├── tests/                         # Modern test suite
 │   ├── __init__.py
 │   ├── test_downloader.py        # Core functionality tests (15 tests)
 │   ├── test_utils.py             # Utility tests (6 tests)
-│   └── test_flet_setup.py        # GUI framework tests (11 tests)
+│   └── test_gui_framework.py     # GUI framework tests (11 tests)
 ├── requirements.txt              # Python dependencies (yt-dlp, flet)
 ├── CLAUDE.md                     # This documentation file
 ├── download-data/                # Created automatically, contains downloaded videos

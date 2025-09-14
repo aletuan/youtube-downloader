@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit tests for Flet GUI framework and YouTube Downloader GUI components
+Unit tests for GUI framework components and YouTube Downloader GUI integration
 """
 
 import unittest
@@ -79,23 +79,22 @@ class TestGUIIntegration(unittest.TestCase):
         # Mock the GUI imports to avoid actual GUI creation
         self.mock_modules = {}
     
-    @patch('sys.path')
-    def test_gui_imports(self, mock_path):
+    def test_gui_imports(self):
         """Test that GUI can import core modules"""
         try:
             from core.downloader import download_youtube_video, _get_video_info
             from core.utils import sanitize_filename
             from config.settings import DEFAULT_OUTPUT_DIR, SUBTITLE_LANGUAGES
-            
+
             # Verify functions are callable
             self.assertTrue(callable(download_youtube_video))
             self.assertTrue(callable(_get_video_info))
             self.assertTrue(callable(sanitize_filename))
-            
+
             # Verify config values
             self.assertIsInstance(DEFAULT_OUTPUT_DIR, str)
             self.assertIsInstance(SUBTITLE_LANGUAGES, list)
-            
+
         except ImportError as e:
             self.fail(f"GUI failed to import core modules: {e}")
     

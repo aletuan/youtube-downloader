@@ -343,7 +343,7 @@ def handle_play_click(page: ft.Page, video_title: str = "Video"):
     print(f"[DEBUG] Loading video player for file: {_last_downloaded_video_path}")
     
     # Import here to avoid circular imports
-    from gui.video_player import VideoPlayerScreen
+    from gui.video_player_screen import VideoPlayerScreen
     
     # Create video player screen
     player_screen = VideoPlayerScreen(page)
