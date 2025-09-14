@@ -113,17 +113,11 @@ def handle_preview_click(
                 all_files = [f.name for f in video_folder.iterdir() if f.is_file()]
                 
                 # Check for subtitle availability
-                vietnamese_subtitles = [f for f in all_files if f.endswith('.vi.vtt')]
-                english_subtitles = [f for f in all_files if f.endswith('.en.vtt')]
-                
+                subtitle_files = [f for f in all_files if f.endswith('.vtt')]
+
                 subtitle_status = ""
-                if vietnamese_subtitles:
-                    if any('.vi.vtt' in f for f in vietnamese_subtitles):
-                        subtitle_status = " | 🇻🇳 Vietnamese subtitles (native)"
-                    else:
-                        subtitle_status = " | 🇻🇳 Vietnamese subtitles (translated)"
-                elif english_subtitles:
-                    subtitle_status = " | 🇺🇸 English subtitles"
+                if subtitle_files:
+                    subtitle_status = " | 📝 Subtitles available"
                 
                 info_column.controls[4].value = f"✅ Ready to play{subtitle_status}"
                 info_column.controls[4].color = ft.Colors.GREEN_600
@@ -283,18 +277,6 @@ def handle_download_click(
                         status_text.value = f"✅ {action_text} completed!"
                         progress_info.value = f"Completed in {progress.elapsed:.1f}s"
                         
-                    elif progress.status == "translating":
-                        # Translation in progress
-                        progress_bar.value = None  # Indeterminate progress for translation
-                        status_text.value = f"🌐 Translating subtitles to Vietnamese..."
-                        progress_info.value = "Translating subtitles using Claude AI..."
-                        
-                    elif progress.status == "translation_complete":
-                        # Translation completed - hide progress bar
-                        progress_bar.visible = False
-                        progress_info.visible = False
-                        status_text.value = f"✅ Translation completed! Vietnamese subtitles available."
-                        status_text.color = ft.Colors.GREEN_600
                         
                     elif progress.status == "error":
                         # Download error
@@ -340,9 +322,9 @@ def handle_download_click(
                     elif not found_files:
                         print(f"[DEBUG] No files found in folder: {final_folder}")
                 
-                status_text.value = f"✅ Download completed!"
+                status_text.value = f"✅ Download completed! Click Play to watch your video."
             except:
-                status_text.value = f"✅ Download completed!"
+                status_text.value = f"✅ Download completed! Click Play to watch your video."
             
             status_text.color = ft.Colors.GREEN_600
             
